@@ -567,10 +567,8 @@ export class ExtensionRunner {
 				}
 
 				if (builtInKeybinding?.restrictOverride === false) {
-					addDiagnostic(
-						`Extension shortcut conflict: '${key}' is built-in shortcut for ${builtInKeybinding.keybinding} and ${shortcut.extensionPath}. Using ${shortcut.extensionPath}.`,
-						shortcut.extensionPath,
-					);
+					// Built-in и extension shortcut сосуществуют на одном хоткее:
+					// оба обработчика выполняются, это намеренная возможность, не конфликт.
 				}
 
 				const existingExtensionShortcut = extensionShortcuts.get(normalizedKey);
