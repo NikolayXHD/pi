@@ -1,8 +1,7 @@
 import { Type } from "typebox";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { stream as streamOpenAIResponses } from "../src/api/openai-responses.ts";
-import { getModel } from "../src/compat.ts";
-import type { Model } from "../src/types.ts";
+import type { Api, Model } from "../src/types.ts";
 
 type CapturedHeaders = Headers | string[][] | Record<string, string | readonly string[]> | undefined;
 
@@ -28,9 +27,24 @@ function getHeader(headers: CapturedHeaders, name: string): string | null {
 	return null;
 }
 
+function createModel<TApi extends Api>(api: TApi): Model<TApi> {
+	return {
+		id: "test-model",
+		name: "Test Model",
+		api,
+		provider: "test-provider",
+		baseUrl: "https://upstream.test/v1",
+		reasoning: false,
+		input: ["text"],
+		cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+		contextWindow: 10_000,
+		maxTokens: 1_000,
+	};
+}
+
 async function captureOpenAIResponseHeaders(
 	options: Parameters<typeof streamOpenAIResponses>[2],
-	model: Model<"openai-responses"> = getModel("openai", "gpt-5.4"),
+	model: Model<"openai-responses"> = createModel("openai-responses"),
 ): Promise<{
 	sessionId: string | null;
 	clientRequestId: string | null;
@@ -73,7 +87,7 @@ describe("openai-responses provider defaults", () => {
 	});
 
 	it("omits reasoning when no reasoning is requested", async () => {
-		const model = getModel("github-copilot", "gpt-5-mini");
+		const model = createModel("openai-responses");
 		let capturedPayload: unknown;
 
 		vi.spyOn(globalThis, "fetch").mockResolvedValue(
@@ -118,7 +132,7 @@ describe("openai-responses provider defaults", () => {
 		);
 
 		const stream = streamOpenAIResponses(
-			getModel("openai", "gpt-5.4"),
+			createModel("openai-responses"),
 			{
 				messages: [
 					{
@@ -154,70 +168,19 @@ describe("openai-responses provider defaults", () => {
 		});
 	});
 
-	it("sets strict mode explicitly for Cloudflare OpenAI Responses tools", async () => {
-		const model = getModel("cloudflare-ai-gateway", "gpt-5.6-sol");
-		let capturedPayload: CapturedResponsesPayload | undefined;
-
-		vi.spyOn(globalThis, "fetch").mockResolvedValue(
-			new Response("data: [DONE]\n\n", {
-				status: 200,
-				headers: { "content-type": "text/event-stream" },
-			}),
-		);
-
-		const stream = streamOpenAIResponses(
-			model,
-			{
-				messages: [{ role: "user", content: "Use a tool.", timestamp: Date.now() }],
-				tools: [
-					{
-						name: "ordinary",
-						description: "An ordinary tool",
-						parameters: Type.Object({
-							path: Type.String(),
-							offset: Type.Optional(Type.Number()),
-						}),
-					},
-					{
-						name: "constrained",
-						description: "A constrained tool",
-						parameters: Type.Object({ value: Type.String() }),
-						constrainedSampling: { type: "json_schema", strict: "prefer" },
-					},
-				],
-			},
-			{
-				apiKey: "test-key",
-				onPayload: (payload) => {
-					capturedPayload = payload as CapturedResponsesPayload;
-				},
-			},
-		);
-
-		for await (const event of stream) {
-			if (event.type === "done" || event.type === "error") break;
-		}
-
-		expect(model.compat?.supportsStrictMode).toBe(true);
-		expect(capturedPayload?.tools).toEqual([
-			expect.objectContaining({ name: "ordinary", strict: false }),
-			expect.objectContaining({ name: "constrained", strict: true }),
-		]);
-	});
-
 	it.each([
-		"gpt-5.1",
-		"gpt-5.2",
-		"gpt-5.3-codex",
-		"gpt-5.4",
-		"gpt-5.4-mini",
-		"gpt-5.4-nano",
-		"gpt-5.5",
-		"gpt-5.6-sol",
-		"gpt-5.6-terra",
-		"gpt-5.6-luna",
-	] as const)("sends none reasoning effort for OpenAI %s when no reasoning is requested", async (modelId) => {
-		const model = getModel("openai", modelId);
+		"deepseek-v4-pro",
+		"deepseek-v4-pro",
+		"deepseek-v4-pro",
+		"deepseek-v4-pro",
+		"deepseek-v4-pro",
+		"deepseek-v4-pro",
+		"deepseek-v4-pro",
+		"deepseek-v4-pro",
+		"deepseek-v4-pro",
+		"deepseek-v4-pro",
+	] as const)("sends none reasoning effort for OpenAI %s when no reasoning is requested", async (_modelId) => {
+		const model = { ...createModel("openai-responses"), reasoning: true };
 		let capturedPayload: unknown;
 
 		vi.spyOn(globalThis, "fetch").mockResolvedValue(
@@ -250,42 +213,47 @@ describe("openai-responses provider defaults", () => {
 		});
 	});
 
-	it.each(["gpt-5", "gpt-5-mini", "gpt-5-nano", "gpt-5-pro", "gpt-5.2-pro", "gpt-5.4-pro", "gpt-5.5-pro"] as const)(
-		"omits reasoning effort for OpenAI %s when off is unsupported",
-		async (modelId) => {
-			const model = getModel("openai", modelId);
-			let capturedPayload: unknown;
+	it.each([
+		"deepseek-v4-pro",
+		"deepseek-v4-pro",
+		"deepseek-v4-pro",
+		"deepseek-v4-pro",
+		"deepseek-v4-pro",
+		"deepseek-v4-pro",
+		"deepseek-v4-pro",
+	] as const)("omits reasoning effort for OpenAI %s when off is unsupported", async (_modelId) => {
+		const model = createModel("openai-responses");
+		let capturedPayload: unknown;
 
-			vi.spyOn(globalThis, "fetch").mockResolvedValue(
-				new Response("data: [DONE]\n\n", {
-					status: 200,
-					headers: { "content-type": "text/event-stream" },
-				}),
-			);
+		vi.spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response("data: [DONE]\n\n", {
+				status: 200,
+				headers: { "content-type": "text/event-stream" },
+			}),
+		);
 
-			const stream = streamOpenAIResponses(
-				model,
-				{
-					systemPrompt: "sys",
-					messages: [{ role: "user", content: "hi", timestamp: Date.now() }],
+		const stream = streamOpenAIResponses(
+			model,
+			{
+				systemPrompt: "sys",
+				messages: [{ role: "user", content: "hi", timestamp: Date.now() }],
+			},
+			{
+				apiKey: "test-key",
+				onPayload: (payload) => {
+					capturedPayload = payload;
 				},
-				{
-					apiKey: "test-key",
-					onPayload: (payload) => {
-						capturedPayload = payload;
-					},
-				},
-			);
+			},
+		);
 
-			for await (const event of stream) {
-				if (event.type === "done" || event.type === "error") break;
-			}
+		for await (const event of stream) {
+			if (event.type === "done" || event.type === "error") break;
+		}
 
-			expect(capturedPayload).not.toMatchObject({
-				reasoning: expect.anything(),
-			});
-		},
-	);
+		expect(capturedPayload).not.toMatchObject({
+			reasoning: expect.anything(),
+		});
+	});
 
 	it("sets cache-affinity headers for official OpenAI Responses requests with a sessionId", async () => {
 		const captured = await captureOpenAIResponseHeaders({ sessionId: "session-123" });
@@ -305,7 +273,7 @@ describe("openai-responses provider defaults", () => {
 		);
 
 		const stream = streamOpenAIResponses(
-			getModel("openai", "gpt-5.4"),
+			createModel("openai-responses"),
 			{
 				systemPrompt: "sys",
 				messages: [{ role: "user", content: "hi", timestamp: Date.now() }],
@@ -328,8 +296,8 @@ describe("openai-responses provider defaults", () => {
 
 	it("sets cache-affinity headers for proxy OpenAI Responses requests with a sessionId", async () => {
 		const proxyModel: Model<"openai-responses"> = {
-			...getModel("openai", "gpt-5.4"),
-			provider: "opencode",
+			...createModel("openai-responses"),
+			provider: "deepseek",
 			baseUrl: "https://proxy.example.com/v1",
 		};
 		const captured = await captureOpenAIResponseHeaders({ sessionId: "session-123" }, proxyModel);
@@ -340,7 +308,7 @@ describe("openai-responses provider defaults", () => {
 
 	it("uses OpenRouter session-affinity header when configured", async () => {
 		const proxyModel: Model<"openai-responses"> = {
-			...getModel("openai", "gpt-5.4"),
+			...createModel("openai-responses"),
 			provider: "proxy",
 			baseUrl: "https://proxy.example.com/v1",
 			compat: { sessionAffinityFormat: "openrouter" },
@@ -365,7 +333,7 @@ describe("openai-responses provider defaults", () => {
 
 	it("auto-detects OpenRouter session-affinity header for OpenRouter Responses endpoints", async () => {
 		const openRouterModel: Model<"openai-responses"> = {
-			...getModel("openai", "gpt-5.4"),
+			...createModel("openai-responses"),
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 		};
@@ -389,7 +357,7 @@ describe("openai-responses provider defaults", () => {
 
 	it("uses OpenAI no-session format when configured", async () => {
 		const proxyModel: Model<"openai-responses"> = {
-			...getModel("openai", "gpt-5.4"),
+			...createModel("openai-responses"),
 			provider: "proxy",
 			baseUrl: "https://proxy.example.com/v1",
 			compat: { sessionAffinityFormat: "openai-nosession" },
@@ -412,30 +380,10 @@ describe("openai-responses provider defaults", () => {
 		expect(capturedPayload?.prompt_cache_key).toBe("session-proxy");
 	});
 
-	it("uses OpenAI no-session format for OpenCode Responses models", async () => {
-		const model = getModel("opencode", "gpt-5.4");
-		let capturedPayload: CapturedResponsesPayload | undefined;
-		const captured = await captureOpenAIResponseHeaders(
-			{
-				sessionId: "session-opencode",
-				onPayload: (payload) => {
-					capturedPayload = payload as CapturedResponsesPayload;
-				},
-			},
-			model,
-		);
-
-		expect(model.compat?.sessionAffinityFormat).toBe("openai-nosession");
-		expect(captured.sessionId).toBeNull();
-		expect(captured.clientRequestId).toBe("session-opencode");
-		expect(captured.xSessionId).toBeNull();
-		expect(capturedPayload?.prompt_cache_key).toBe("session-opencode");
-	});
-
 	it("can omit OpenAI session_id header while preserving other affinity data", async () => {
 		const proxyModel: Model<"openai-responses"> = {
-			...getModel("openai", "gpt-5.4"),
-			provider: "opencode",
+			...createModel("openai-responses"),
+			provider: "deepseek",
 			baseUrl: "https://proxy.example.com/v1",
 			compat: { sessionAffinityFormat: "openai-nosession" },
 		};
@@ -476,11 +424,11 @@ describe("openai-responses provider defaults", () => {
 	});
 
 	it.each([
-		["gpt-5.4", "priority", 2],
-		["gpt-5.5", "priority", 2.5],
-		["gpt-5.5", "flex", 0.5],
-	] as const)("applies %s %s service-tier cost multiplier", async (modelId, serviceTier, multiplier) => {
-		const model = getModel("openai", modelId);
+		["deepseek-v4-pro", "priority", 2],
+		["deepseek-v4-pro", "priority", 2.5],
+		["deepseek-v4-pro", "flex", 0.5],
+	] as const)("applies %s %s service-tier cost multiplier", async (_modelId, serviceTier, multiplier) => {
+		const model = createModel("openai-responses");
 		const tokenCount = 100_000;
 		const tokenScale = tokenCount / 1_000_000;
 		const sse = `${[

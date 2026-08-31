@@ -32,7 +32,7 @@ const compat = {
 	requiresAssistantAfterToolResult: false,
 	requiresThinkingAsText: true,
 	requiresReasoningContentOnAssistantMessages: false,
-	thinkingFormat: "openai",
+	thinkingFormat: "deepseek",
 	openRouterRouting: {},
 	vercelGatewayRouting: {},
 	chatTemplateKwargs: {},

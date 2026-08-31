@@ -59,8 +59,8 @@ describe("environment API keys", () => {
 		process.env.GH_TOKEN = "gh-token";
 		process.env.GITHUB_TOKEN = "github-token";
 
-		expect(findEnvKeys("github-copilot")).toBeUndefined();
-		expect(getEnvApiKey("github-copilot")).toBeUndefined();
+		expect(findEnvKeys("deepseek")).toBeUndefined();
+		expect(getEnvApiKey("deepseek")).toBeUndefined();
 	});
 
 	it("resolves GitHub Copilot credentials from COPILOT_GITHUB_TOKEN", () => {
@@ -68,8 +68,8 @@ describe("environment API keys", () => {
 		process.env.GH_TOKEN = "gh-token";
 		process.env.GITHUB_TOKEN = "github-token";
 
-		expect(findEnvKeys("github-copilot")).toEqual(["COPILOT_GITHUB_TOKEN"]);
-		expect(getEnvApiKey("github-copilot")).toBe("copilot-token");
+		expect(findEnvKeys("deepseek")).toEqual(["COPILOT_GITHUB_TOKEN"]);
+		expect(getEnvApiKey("deepseek")).toBe("copilot-token");
 	});
 
 	it("resolves ZAI China Coding Plan credentials from ZAI_CODING_CN_API_KEY", () => {
@@ -84,8 +84,8 @@ describe("environment API keys", () => {
 		process.env.ANTHROPIC_OAUTH_TOKEN = "oauth-token";
 		process.env.ANTHROPIC_API_KEY = "api-key";
 
-		expect(findEnvKeys("anthropic")).toEqual(["ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_OAUTH_TOKEN", "ANTHROPIC_API_KEY"]);
-		expect(getEnvApiKey("anthropic")).toBe("oauth-token");
+		expect(findEnvKeys("minimax")).toEqual(["ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_OAUTH_TOKEN", "ANTHROPIC_API_KEY"]);
+		expect(getEnvApiKey("minimax")).toBe("oauth-token");
 	});
 
 	it("does not return ANTHROPIC_AUTH_TOKEN as an API key", () => {
@@ -93,8 +93,8 @@ describe("environment API keys", () => {
 		delete process.env.ANTHROPIC_OAUTH_TOKEN;
 		delete process.env.ANTHROPIC_API_KEY;
 
-		expect(findEnvKeys("anthropic")).toEqual(["ANTHROPIC_AUTH_TOKEN"]);
-		expect(getEnvApiKey("anthropic")).toBeUndefined();
+		expect(findEnvKeys("minimax")).toEqual(["ANTHROPIC_AUTH_TOKEN"]);
+		expect(getEnvApiKey("minimax")).toBeUndefined();
 	});
 
 	it("preserves ANTHROPIC_OAUTH_TOKEN as an API key", () => {
@@ -102,8 +102,8 @@ describe("environment API keys", () => {
 		process.env.ANTHROPIC_OAUTH_TOKEN = "oauth-token";
 		delete process.env.ANTHROPIC_API_KEY;
 
-		expect(findEnvKeys("anthropic")).toEqual(["ANTHROPIC_OAUTH_TOKEN"]);
-		expect(getEnvApiKey("anthropic")).toBe("oauth-token");
+		expect(findEnvKeys("minimax")).toEqual(["ANTHROPIC_OAUTH_TOKEN"]);
+		expect(getEnvApiKey("minimax")).toBe("oauth-token");
 	});
 
 	it("falls back to ANTHROPIC_API_KEY for API key lookup", () => {
@@ -111,6 +111,6 @@ describe("environment API keys", () => {
 		delete process.env.ANTHROPIC_OAUTH_TOKEN;
 		process.env.ANTHROPIC_API_KEY = "api-key";
 
-		expect(getEnvApiKey("anthropic")).toBe("api-key");
+		expect(getEnvApiKey("minimax")).toBe("api-key");
 	});
 });

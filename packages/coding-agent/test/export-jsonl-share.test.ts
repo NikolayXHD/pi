@@ -28,7 +28,7 @@ describe("JSONL share export", () => {
 		const { session } = await createAgentSession({
 			cwd: tempDir,
 			agentDir: join(tempDir, "agent"),
-			model: getModel("anthropic", "claude-sonnet-4-5")!,
+			model: getModel("minimax", "MiniMax-M2.7")!,
 			settingsManager: SettingsManager.inMemory(),
 			sessionManager,
 			tools: ["share_tool"],

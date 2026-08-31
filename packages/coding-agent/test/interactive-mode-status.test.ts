@@ -423,8 +423,8 @@ describe("InteractiveMode.createBaseAutocompleteProvider", () => {
 			}
 		).prototype.createBaseAutocompleteProvider;
 		const models = [
-			{ id: "gpt-5.2-codex", provider: "github-copilot", name: "GPT-5.2 Codex" },
-			{ id: "gpt-5.5", provider: "openai-codex", name: "GPT-5.5" },
+			{ id: "deepseek-v4-pro", provider: "deepseek", name: "GPT-5.2 Codex" },
+			{ id: "deepseek-v4-pro", provider: "deepseek", name: "GPT-5.5" },
 		];
 		const fakeThis: FakeInteractiveMode = {
 			session: {
@@ -486,9 +486,9 @@ describe("InteractiveMode.createBaseAutocompleteProvider", () => {
 			sessionManager: { getCwd: () => "/tmp" },
 			fdPath: null,
 			getLoginProviderOptions: () => [
-				{ id: "anthropic", name: "Anthropic", authType: "oauth" },
-				{ id: "anthropic", name: "Anthropic", authType: "api_key" },
-				{ id: "openai", name: "OpenAI", authType: "api_key" },
+				{ id: "minimax", name: "Anthropic", authType: "oauth" },
+				{ id: "minimax", name: "Anthropic", authType: "api_key" },
+				{ id: "deepseek", name: "OpenAI", authType: "api_key" },
 			],
 		};
 
@@ -500,8 +500,8 @@ describe("InteractiveMode.createBaseAutocompleteProvider", () => {
 
 		expect(suggestions?.items).toEqual([
 			{
-				value: "anthropic",
-				label: "anthropic",
+				value: "minimax",
+				label: "minimax",
 				description: "Anthropic · subscription/API key",
 			},
 		]);

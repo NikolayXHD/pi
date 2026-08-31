@@ -13,7 +13,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { streamSimple as streamSimpleBedrock } from "../src/api/bedrock-converse-stream.ts";
 import { stream as streamOpenAICompletions } from "../src/api/openai-completions.ts";
 import { stream as streamOpenAIResponses } from "../src/api/openai-responses.ts";
-import type { Context, Model } from "../src/types.ts";
+import type { Api, Context, Model } from "../src/types.ts";
 
 // openai SDK APIError shape: "<status> status code (no body)" message, the
 // parsed body kept on `.error`.
@@ -88,7 +88,20 @@ vi.mock("@aws-sdk/client-bedrock-runtime", () => {
 	};
 });
 
-import { getModel } from "../src/compat.ts";
+function createModel<TApi extends Api>(api: TApi): Model<TApi> {
+	return {
+		id: "test-model",
+		name: "Test Model",
+		api,
+		provider: "test-provider",
+		baseUrl: "https://upstream.test/v1",
+		reasoning: false,
+		input: ["text"],
+		cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+		contextWindow: 10_000,
+		maxTokens: 1_000,
+	};
+}
 
 const context: Context = {
 	systemPrompt: "",
@@ -110,10 +123,10 @@ const completionsModel: Model<"openai-completions"> = {
 };
 
 const responsesModel: Model<"openai-responses"> = {
-	id: "gpt-test",
+	id: "deepseek-v4-pro",
 	name: "GPT Test",
 	api: "openai-responses",
-	provider: "openai",
+	provider: "deepseek",
 	baseUrl: "https://api.openai.com/v1",
 	reasoning: false,
 	input: ["text"],
@@ -178,7 +191,7 @@ describe("provider error body passthrough (per-tier regression)", () => {
 			$response: { statusCode: 403, body: '{"message":"blocked by gateway WAF"}' },
 		});
 
-		const model = getModel("amazon-bedrock", "us.anthropic.claude-opus-4-8");
+		const model = createModel("bedrock-converse-stream");
 		const output = await drainResult(streamSimpleBedrock(model, { messages: context.messages }, {}));
 
 		expect(output.stopReason).toBe("error");
@@ -202,7 +215,7 @@ describe("provider error body passthrough (per-tier regression)", () => {
 			},
 		);
 
-		const model = getModel("amazon-bedrock", "global.anthropic.claude-opus-5");
+		const model = createModel("bedrock-converse-stream");
 		const output = await drainResult(streamSimpleBedrock(model, { messages: context.messages }, {}));
 
 		expect(output.stopReason).toBe("error");

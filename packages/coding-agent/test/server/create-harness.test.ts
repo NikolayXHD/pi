@@ -65,7 +65,7 @@ describe("coding-agent Harness construction", () => {
 		const created = await createCodingAgentHarness({
 			session,
 			models: createModels(),
-			model: getModel("google", "gemini-2.5-flash"),
+			model: getModel("deepseek", "deepseek-v4-pro"),
 			thinkingLevel: "high",
 			env,
 			streamOptions: { maxTokens: 123 },
@@ -115,7 +115,7 @@ describe("coding-agent Harness construction", () => {
 		const created = await createCodingAgentHarness({
 			session,
 			models: createModels(),
-			model: getModel("google", "gemini-2.5-flash"),
+			model: getModel("deepseek", "deepseek-v4-pro"),
 			env,
 			tools: [customTool],
 			activeToolNames: [],
@@ -139,7 +139,7 @@ describe("coding-agent Harness construction", () => {
 		const created = await createCodingAgentHarness({
 			session,
 			models: createModels(),
-			model: getModel("google", "gemini-2.5-flash"),
+			model: getModel("deepseek", "deepseek-v4-pro"),
 			thinkingLevel: "high",
 			env,
 			sessionFile: "/sessions/current.jsonl",
@@ -155,14 +155,14 @@ describe("coding-agent Harness construction", () => {
 			expect(env.executionOverrides).toEqual({
 				PI_SESSION_ID: "session-file-harness",
 				PI_SESSION_FILE: "/sessions/current.jsonl",
-				PI_PROVIDER: "google",
-				PI_MODEL: "gemini-2.5-flash",
+				PI_PROVIDER: "deepseek",
+				PI_MODEL: "deepseek-v4-pro",
 				PI_REASONING_LEVEL: "high",
 			});
 			expect(result.content).toEqual([
 				{
 					type: "text",
-					text: "session-file-harness|/sessions/current.jsonl|google|gemini-2.5-flash|high|true",
+					text: "session-file-harness|/sessions/current.jsonl|deepseek|deepseek-v4-pro|high|true",
 				},
 			]);
 		} finally {
@@ -180,12 +180,12 @@ describe("coding-agent Harness construction", () => {
 		const created = await createCodingAgentHarness({
 			session,
 			models: createModels(),
-			model: getModel("google", "gemini-2.5-flash"),
+			model: getModel("deepseek", "deepseek-v4-pro"),
 			thinkingLevel: "high",
 			env,
 		});
 		try {
-			await created.harness.setModel(getModel("anthropic", "claude-sonnet-4-5"));
+			await created.harness.setModel(getModel("minimax", "MiniMax-M2.7"));
 			await created.harness.setThinkingLevel("low");
 			const bash = (await created.harness.getTools()).find((tool) => tool.name === "bash");
 			if (!bash) throw new Error("Expected the default bash tool");
@@ -197,8 +197,8 @@ describe("coding-agent Harness construction", () => {
 			expect(env.executionOverrides).toEqual({
 				PI_SESSION_ID: "dynamic-bash-session",
 				PI_SESSION_FILE: "",
-				PI_PROVIDER: "anthropic",
-				PI_MODEL: "claude-sonnet-4-5",
+				PI_PROVIDER: "minimax",
+				PI_MODEL: "MiniMax-M2.7",
 				PI_REASONING_LEVEL: "low",
 			});
 			expect(Object.hasOwn(env.executionOverrides ?? {}, "PI_SESSION_FILE")).toBe(true);
@@ -206,7 +206,7 @@ describe("coding-agent Harness construction", () => {
 			expect(result.content).toEqual([
 				{
 					type: "text",
-					text: "x:dynamic-bash-session|anthropic|claude-sonnet-4-5|low|true",
+					text: "x:dynamic-bash-session|minimax|MiniMax-M2.7|low|true",
 				},
 			]);
 		} finally {
@@ -228,7 +228,7 @@ describe("coding-agent Harness construction", () => {
 			const created = await createCodingAgentHarness({
 				session,
 				models: createModels(),
-				model: getModel("google", "gemini-2.5-flash"),
+				model: getModel("deepseek", "deepseek-v4-pro"),
 				env,
 			});
 			createSpy.mockRestore();

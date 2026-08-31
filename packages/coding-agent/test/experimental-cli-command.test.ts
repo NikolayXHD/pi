@@ -6,9 +6,9 @@ describe("experimental CLI commands", () => {
 		expect(
 			experimentalCli.parse([
 				"--provider",
-				"anthropic",
+				"minimax",
 				"--model",
-				"claude-sonnet",
+				"MiniMax-M2.7",
 				"--thinking",
 				"high",
 				"inspect",
@@ -19,8 +19,8 @@ describe("experimental CLI commands", () => {
 			command: {
 				command: "pi",
 				options: {
-					provider: "anthropic",
-					model: "claude-sonnet",
+					provider: "minimax",
+					model: "MiniMax-M2.7",
 					thinking: "high",
 					messages: ["inspect", "the project"],
 				},
@@ -49,10 +49,10 @@ describe("experimental CLI commands", () => {
 	});
 
 	test("stops parsing command options when existing CLI arguments begin", () => {
-		const result = experimentalCli.parse(["--model", "claude-sonnet", "--listen=unix:///tmp/second.sock"]);
+		const result = experimentalCli.parse(["--model", "MiniMax-M2.7", "--listen=unix:///tmp/second.sock"]);
 		expect(result).toMatchObject({
 			ok: true,
-			command: { command: "pi", options: { model: "claude-sonnet" } },
+			command: { command: "pi", options: { model: "MiniMax-M2.7" } },
 		});
 		if (!result.ok || result.command.command !== "pi") return;
 		expect(result.command.listen).toBeUndefined();

@@ -16,10 +16,10 @@ import { AssistantMessageEventStream } from "../src/utils/event-stream.ts";
 
 function makeModel(): Model<"openai-responses"> {
 	return {
-		id: "gpt-test",
+		id: "deepseek-v4-pro",
 		name: "GPT Test",
 		api: "openai-responses",
-		provider: "openai",
+		provider: "deepseek",
 		baseUrl: "https://api.openai.com/v1",
 		reasoning: false,
 		input: ["text", "image"],
@@ -45,8 +45,8 @@ function makeOutput(): AssistantMessage {
 		role: "assistant",
 		content: [],
 		api: "openai-responses",
-		provider: "openai",
-		model: "gpt-test",
+		provider: "deepseek",
+		model: "deepseek-v4-pro",
 		usage: makeUsage(),
 		stopReason: "pending",
 		timestamp: Date.now(),
@@ -202,8 +202,8 @@ describe("constrained tool sampling", () => {
 				{
 					role: "assistant",
 					api: "openai-responses",
-					provider: "openai",
-					model: "gpt-test",
+					provider: "deepseek",
+					model: "deepseek-v4-pro",
 					content: [replayedToolCall],
 					usage: makeUsage(),
 					stopReason: "toolUse",
@@ -222,14 +222,14 @@ describe("constrained tool sampling", () => {
 		for (const invalidArguments of [{}, { payload: 42 }]) {
 			replayedToolCall.arguments = invalidArguments;
 			expect(() =>
-				convertResponsesMessages(makeModel(), context, new Set(["openai"]), {
+				convertResponsesMessages(makeModel(), context, new Set(["deepseek"]), {
 					grammarToolInputProperties: new Map([["sample_tool", "payload"]]),
 				}),
 			).toThrow('Grammar tool call "sample_tool" requires argument "payload" to be a string');
 		}
 
 		replayedToolCall.arguments = { payload: "abc" };
-		const messages = convertResponsesMessages(makeModel(), context, new Set(["openai"]), {
+		const messages = convertResponsesMessages(makeModel(), context, new Set(["deepseek"]), {
 			grammarToolInputProperties: new Map([["sample_tool", "payload"]]),
 		});
 

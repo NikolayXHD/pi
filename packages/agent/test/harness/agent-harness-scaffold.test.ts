@@ -24,7 +24,7 @@ function createHarness(session = createSession()): Promise<AgentHarness> {
 	return AgentHarness.create({
 		session,
 		models: createModels(),
-		model: getModel("google", "gemini-2.5-flash"),
+		model: getModel("deepseek", "deepseek-v4-pro"),
 	}).then(({ harness }) => harness);
 }
 
@@ -59,7 +59,7 @@ describe("AgentHarness v2 scaffold", () => {
 		const { harness, suspended } = await AgentHarness.create({
 			session,
 			models: createModels(),
-			model: getModel("google", "gemini-2.5-flash"),
+			model: getModel("deepseek", "deepseek-v4-pro"),
 		});
 
 		expect(suspended).toEqual([]);
@@ -76,14 +76,14 @@ describe("AgentHarness v2 scaffold", () => {
 			AgentHarness.create({
 				session: recorded,
 				models: createModels(),
-				model: getModel("google", "gemini-2.5-flash"),
+				model: getModel("deepseek", "deepseek-v4-pro"),
 			}),
 		).rejects.toMatchObject({ name: "HarnessNotImplemented", operation: "create.restore" });
 	});
 
 	it("keeps scaffold-safe configuration as defensive copies", async () => {
 		const harness = await createHarness();
-		const model = getModel("anthropic", "claude-sonnet-4-5");
+		const model = getModel("minimax", "MiniMax-M2.7");
 		await harness.setModel(model);
 		expect(await harness.getModel()).toBe(model);
 

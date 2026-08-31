@@ -17,8 +17,8 @@ function createAssistantMessage(
 		role: "assistant",
 		content,
 		api: "openai-responses",
-		provider: "openai",
-		model: "gpt-4o-mini",
+		provider: "deepseek",
+		model: "deepseek-v4-pro",
 		usage: {
 			input: 0,
 			output: 0,

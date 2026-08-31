@@ -200,13 +200,13 @@ describe("createAgentSession provider attribution headers", () => {
 	});
 
 	it("adds default attribution headers for the NVIDIA provider", async () => {
-		const headers = await captureHeaders(createModel("nvidia", "https://example.test/v1"));
+		const headers = await captureHeaders(createModel("deepseek", "https://example.test/v1"));
 
 		expect(headers?.["X-BILLING-INVOKE-ORIGIN"]).toBe("Pi");
 	});
 
 	it("does not add NVIDIA NIM attribution headers when telemetry is disabled", async () => {
-		const headers = await captureHeaders(createModel("nvidia", "https://integrate.api.nvidia.com/v1"), {
+		const headers = await captureHeaders(createModel("deepseek", "https://integrate.api.nvidia.com/v1"), {
 			telemetryEnabled: false,
 		});
 
@@ -214,7 +214,7 @@ describe("createAgentSession provider attribution headers", () => {
 	});
 
 	it("lets provider and request headers override NVIDIA NIM defaults", async () => {
-		const headers = await captureHeaders(createModel("nvidia", "https://integrate.api.nvidia.com/v1"), {
+		const headers = await captureHeaders(createModel("deepseek", "https://integrate.api.nvidia.com/v1"), {
 			providerHeaders: {
 				"X-BILLING-INVOKE-ORIGIN": "Provider",
 			},
@@ -237,14 +237,14 @@ describe("createAgentSession provider attribution headers", () => {
 
 	it("does not add NVIDIA NIM attribution headers for NVIDIA models routed through Vercel AI Gateway", async () => {
 		const headers = await captureHeaders(
-			createModel("vercel-ai-gateway", "https://ai-gateway.vercel.sh/v1", "nvidia/nemotron-3-super-120b-a12b"),
+			createModel("deepseek", "https://ai-gateway.vercel.sh/v1", "nvidia/nemotron-3-super-120b-a12b"),
 		);
 
 		expect(headers?.["X-BILLING-INVOKE-ORIGIN"]).toBeUndefined();
 	});
 
 	it("adds OpenCode session headers", async () => {
-		const headers = await captureHeaders(createModel("opencode", "https://opencode.ai/zen/v1"), {
+		const headers = await captureHeaders(createModel("deepseek", "https://opencode.ai/zen/v1"), {
 			sessionId: "opencode-session",
 		});
 
@@ -253,7 +253,7 @@ describe("createAgentSession provider attribution headers", () => {
 	});
 
 	it("lets configured OpenCode headers override the defaults", async () => {
-		const headers = await captureHeaders(createModel("opencode", "https://opencode.ai/zen/v1"), {
+		const headers = await captureHeaders(createModel("deepseek", "https://opencode.ai/zen/v1"), {
 			sessionId: "opencode-session",
 			providerHeaders: {
 				"x-opencode-session": "configured-session",

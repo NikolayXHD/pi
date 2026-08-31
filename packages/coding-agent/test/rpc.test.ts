@@ -21,8 +21,8 @@ describe.skipIf(!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_OAUTH_T
 			cliPath: join(__dirname, "..", "dist", "cli.js"),
 			cwd: join(__dirname, ".."),
 			env: { PI_CODING_AGENT_DIR: sessionDir },
-			provider: "anthropic",
-			model: "claude-sonnet-4-5",
+			provider: "minimax",
+			model: "MiniMax-M2.7",
 		});
 	});
 
@@ -38,8 +38,8 @@ describe.skipIf(!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_OAUTH_T
 		const state = await client.getState();
 
 		expect(state.model).toBeDefined();
-		expect(state.model?.provider).toBe("anthropic");
-		expect(state.model?.id).toBe("claude-sonnet-4-5");
+		expect(state.model?.provider).toBe("minimax");
+		expect(state.model?.id).toBe("MiniMax-M2.7");
 		expect(state.isStreaming).toBe(false);
 		expect(state.messageCount).toBe(0);
 	}, 30000);

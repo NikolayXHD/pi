@@ -87,7 +87,7 @@ function persistSession(session: SessionManager, content: string): void {
 		role: "assistant",
 		content: [{ type: "text", text: "persisted" }],
 		api: "anthropic-messages",
-		provider: "anthropic",
+		provider: "minimax",
 		model: "test",
 		usage: {
 			input: 1,

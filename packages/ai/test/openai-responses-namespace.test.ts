@@ -5,10 +5,10 @@ import type { Api, AssistantMessage, Model, ToolCall } from "../src/types.ts";
 import { AssistantMessageEventStream } from "../src/utils/event-stream.ts";
 
 const model: Model<"openai-responses"> = {
-	id: "gpt-5.4",
+	id: "deepseek-v4-pro",
 	name: "GPT-5.4",
 	api: "openai-responses",
-	provider: "openai",
+	provider: "deepseek",
 	baseUrl: "https://api.openai.com/v1",
 	reasoning: true,
 	input: ["text"],
@@ -122,7 +122,7 @@ describe("OpenAI Responses tool-call namespaces", () => {
 			namespace: "dynamic_tools",
 		});
 
-		const replayed = convertResponsesMessages(model, { messages: [output] }, new Set(["openai"])).find(
+		const replayed = convertResponsesMessages(model, { messages: [output] }, new Set(["deepseek"])).find(
 			(item) => item.type === "function_call",
 		);
 		expect(replayed).toMatchObject({
@@ -150,7 +150,7 @@ describe("OpenAI Responses tool-call namespaces", () => {
 			namespace: "dynamic_tools",
 		});
 
-		const replayed = convertResponsesMessages(model, { messages: [output] }, new Set(["openai"]), {
+		const replayed = convertResponsesMessages(model, { messages: [output] }, new Set(["deepseek"]), {
 			grammarToolInputProperties,
 		}).find((item) => item.type === "custom_tool_call");
 		expect(replayed).toMatchObject({
@@ -182,19 +182,19 @@ describe("OpenAI Responses tool-call namespaces", () => {
 			},
 		);
 		const targetModels: Model<Api>[] = [
-			{ ...model, id: "gpt-5.2", name: "GPT-5.2" },
-			{ ...model, provider: "azure-openai-responses" },
+			{ ...model, id: "deepseek-v4-pro", name: "GPT-5.2" },
+			{ ...model, provider: "deepseek" },
 			{
 				...model,
 				api: "openai-codex-responses",
-				provider: "openai-codex",
-				id: "gpt-5.3-codex-spark",
+				provider: "deepseek",
+				id: "deepseek-v4-pro",
 				name: "GPT-5.3 Codex Spark",
 			},
 		];
 
 		for (const targetModel of targetModels) {
-			const replayed = convertResponsesMessages(targetModel, { messages: [output] }, new Set(["openai"]), {
+			const replayed = convertResponsesMessages(targetModel, { messages: [output] }, new Set(["deepseek"]), {
 				grammarToolInputProperties: new Map([["query", "input"]]),
 			});
 			const functionCall = replayed.find((item) => item.type === "function_call");
@@ -215,7 +215,7 @@ describe("OpenAI Responses tool-call namespaces", () => {
 			arguments: { value: "hello" },
 		});
 
-		const replayed = convertResponsesMessages(model, { messages: [output] }, new Set(["openai"])).find(
+		const replayed = convertResponsesMessages(model, { messages: [output] }, new Set(["deepseek"])).find(
 			(item) => item.type === "function_call",
 		);
 		expect(replayed).toBeDefined();

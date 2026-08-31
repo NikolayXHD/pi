@@ -24,10 +24,10 @@ import { createTestResourceLoader } from "./utilities.ts";
 // Mock models for testing
 const mockModels: Model<"anthropic-messages">[] = [
 	{
-		id: "claude-sonnet-4-5",
+		id: "MiniMax-M2.7",
 		name: "Claude Sonnet 4.5",
 		api: "anthropic-messages",
-		provider: "anthropic",
+		provider: "minimax",
 		baseUrl: "https://api.anthropic.com",
 		reasoning: true,
 		input: ["text", "image"],
@@ -36,10 +36,10 @@ const mockModels: Model<"anthropic-messages">[] = [
 		maxTokens: 8192,
 	},
 	{
-		id: "gpt-4o",
+		id: "deepseek-v4-pro",
 		name: "GPT-4o",
 		api: "anthropic-messages", // Using same type for simplicity
-		provider: "openai",
+		provider: "deepseek",
 		baseUrl: "https://api.openai.com",
 		reasoning: false,
 		input: ["text", "image"],
@@ -82,15 +82,15 @@ const allModels = [...mockModels, ...mockOpenRouterModels];
 describe("parseModelPattern", () => {
 	describe("simple patterns without colons", () => {
 		test("exact match returns model with undefined thinking level", () => {
-			const result = parseModelPattern("claude-sonnet-4-5", allModels);
-			expect(result.model?.id).toBe("claude-sonnet-4-5");
+			const result = parseModelPattern("MiniMax-M2.7", allModels);
+			expect(result.model?.id).toBe("MiniMax-M2.7");
 			expect(result.thinkingLevel).toBeUndefined();
 			expect(result.warning).toBeUndefined();
 		});
 
 		test("partial match returns best model with undefined thinking level", () => {
 			const result = parseModelPattern("sonnet", allModels);
-			expect(result.model?.id).toBe("claude-sonnet-4-5");
+			expect(result.model?.id).toBe("MiniMax-M2.7");
 			expect(result.thinkingLevel).toBeUndefined();
 			expect(result.warning).toBeUndefined();
 		});
@@ -106,14 +106,14 @@ describe("parseModelPattern", () => {
 	describe("patterns with valid thinking levels", () => {
 		test("sonnet:high returns sonnet with high thinking level", () => {
 			const result = parseModelPattern("sonnet:high", allModels);
-			expect(result.model?.id).toBe("claude-sonnet-4-5");
+			expect(result.model?.id).toBe("MiniMax-M2.7");
 			expect(result.thinkingLevel).toBe("high");
 			expect(result.warning).toBeUndefined();
 		});
 
-		test("gpt-4o:medium returns gpt-4o with medium thinking level", () => {
-			const result = parseModelPattern("gpt-4o:medium", allModels);
-			expect(result.model?.id).toBe("gpt-4o");
+		test("deepseek-v4-pro:medium returns deepseek-v4-pro with medium thinking level", () => {
+			const result = parseModelPattern("deepseek-v4-pro:medium", allModels);
+			expect(result.model?.id).toBe("deepseek-v4-pro");
 			expect(result.thinkingLevel).toBe("medium");
 			expect(result.warning).toBeUndefined();
 		});
@@ -121,7 +121,7 @@ describe("parseModelPattern", () => {
 		test("all valid thinking levels work", () => {
 			for (const level of ["off", "minimal", "low", "medium", "high", "xhigh", "max"]) {
 				const result = parseModelPattern(`sonnet:${level}`, allModels);
-				expect(result.model?.id).toBe("claude-sonnet-4-5");
+				expect(result.model?.id).toBe("MiniMax-M2.7");
 				expect(result.thinkingLevel).toBe(level);
 				expect(result.warning).toBeUndefined();
 			}
@@ -131,15 +131,15 @@ describe("parseModelPattern", () => {
 	describe("patterns with invalid thinking levels", () => {
 		test("sonnet:random returns sonnet with undefined thinking level and warning", () => {
 			const result = parseModelPattern("sonnet:random", allModels);
-			expect(result.model?.id).toBe("claude-sonnet-4-5");
+			expect(result.model?.id).toBe("MiniMax-M2.7");
 			expect(result.thinkingLevel).toBeUndefined();
 			expect(result.warning).toContain("Invalid thinking level");
 			expect(result.warning).toContain("random");
 		});
 
-		test("gpt-4o:invalid returns gpt-4o with undefined thinking level and warning", () => {
-			const result = parseModelPattern("gpt-4o:invalid", allModels);
-			expect(result.model?.id).toBe("gpt-4o");
+		test("deepseek-v4-pro:invalid returns deepseek-v4-pro with undefined thinking level and warning", () => {
+			const result = parseModelPattern("deepseek-v4-pro:invalid", allModels);
+			expect(result.model?.id).toBe("deepseek-v4-pro");
 			expect(result.thinkingLevel).toBeUndefined();
 			expect(result.warning).toContain("Invalid thinking level");
 		});
@@ -176,7 +176,7 @@ describe("parseModelPattern", () => {
 			expect(result.warning).toBeUndefined();
 		});
 
-		test("gpt-4o:extended matches the extended model with undefined thinking level", () => {
+		test("deepseek-v4-pro", () => {
 			const result = parseModelPattern("openai/gpt-4o:extended", allModels);
 			expect(result.model?.id).toBe("openai/gpt-4o:extended");
 			expect(result.thinkingLevel).toBeUndefined();
@@ -214,7 +214,7 @@ describe("parseModelPattern", () => {
 			const result = parseModelPattern("sonnet:", allModels);
 			// Empty string after colon is not a valid thinking level
 			// So it tries to match "sonnet:" which won't match, then tries "sonnet"
-			expect(result.model?.id).toBe("claude-sonnet-4-5");
+			expect(result.model?.id).toBe("MiniMax-M2.7");
 			expect(result.warning).toContain("Invalid thinking level");
 		});
 	});
@@ -228,17 +228,20 @@ describe("resolveModelScopeWithDiagnostics", () => {
 				getAvailable: () => allModels,
 			} as unknown as Parameters<typeof resolveModelScopeWithDiagnostics>[1];
 
-			const result = await resolveModelScopeWithDiagnostics(["sonnet:high", "gpt-4o:invalid", "missing"], registry);
+			const result = await resolveModelScopeWithDiagnostics(
+				["sonnet:high", "deepseek-v4-pro:invalid", "missing"],
+				registry,
+			);
 
-			expect(result.scopedModels.map((scoped) => scoped.model.id)).toEqual(["claude-sonnet-4-5", "gpt-4o"]);
+			expect(result.scopedModels.map((scoped) => scoped.model.id)).toEqual(["MiniMax-M2.7", "deepseek-v4-pro"]);
 			expect(result.scopedModels[0].thinkingLevel).toBe("high");
 			expect(result.scopedModels[1].thinkingLevel).toBeUndefined();
 			expect(result.diagnostics).toEqual([
 				{
 					type: "warning",
-					message: 'Invalid thinking level "invalid" in pattern "gpt-4o:invalid". Using default instead.',
+					message: 'Invalid thinking level "invalid" in pattern "deepseek-v4-pro:invalid". Using default instead.',
 					code: "invalid-thinking-level",
-					pattern: "gpt-4o:invalid",
+					pattern: "deepseek-v4-pro:invalid",
 				},
 				{
 					type: "warning",
@@ -325,13 +328,13 @@ describe("resolveCliModel", () => {
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
-			cliModel: "openai/gpt-4o",
+			cliModel: "deepseek/deepseek-v4-pro",
 			modelRuntime: registry,
 		});
 
 		expect(result.error).toBeUndefined();
-		expect(result.model?.provider).toBe("openai");
-		expect(result.model?.id).toBe("gpt-4o");
+		expect(result.model?.provider).toBe("deepseek");
+		expect(result.model?.id).toBe("deepseek-v4-pro");
 	});
 
 	test("resolves fuzzy patterns within an explicit provider", () => {
@@ -340,14 +343,14 @@ describe("resolveCliModel", () => {
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
-			cliProvider: "openai",
-			cliModel: "4o",
+			cliProvider: "deepseek",
+			cliModel: "v4-pro",
 			modelRuntime: registry,
 		});
 
 		expect(result.error).toBeUndefined();
-		expect(result.model?.provider).toBe("openai");
-		expect(result.model?.id).toBe("gpt-4o");
+		expect(result.model?.provider).toBe("deepseek");
+		expect(result.model?.id).toBe("deepseek-v4-pro");
 	});
 
 	test("supports --model <pattern>:<thinking> (without explicit --thinking)", () => {
@@ -361,7 +364,7 @@ describe("resolveCliModel", () => {
 		});
 
 		expect(result.error).toBeUndefined();
-		expect(result.model?.id).toBe("claude-sonnet-4-5");
+		expect(result.model?.id).toBe("MiniMax-M2.7");
 		expect(result.thinkingLevel).toBe("high");
 	});
 
@@ -386,14 +389,14 @@ describe("resolveCliModel", () => {
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
-			cliProvider: "openai",
-			cliModel: "gpt-4o:extended",
+			cliProvider: "deepseek",
+			cliModel: "deepseek-v4-pro",
 			modelRuntime: registry,
 		});
 
 		expect(result.error).toBeUndefined();
-		expect(result.model?.provider).toBe("openai");
-		expect(result.model?.id).toBe("gpt-4o:extended");
+		expect(result.model?.provider).toBe("deepseek");
+		expect(result.model?.id).toBe("deepseek-v4-pro");
 	});
 
 	test("allows custom model ids for explicit providers without double prefixing", () => {
@@ -418,8 +421,8 @@ describe("resolveCliModel", () => {
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
-			cliProvider: "openai",
-			cliModel: "gpt-4o",
+			cliProvider: "deepseek",
+			cliModel: "deepseek-v4-pro",
 			modelRuntime: registry,
 		});
 
@@ -430,43 +433,43 @@ describe("resolveCliModel", () => {
 	test("prefers the sole authenticated provider for an ambiguous bare exact model id", () => {
 		const azureModel: Model<"anthropic-messages"> = {
 			...mockModels[1],
-			id: "gpt-5.6-sol",
+			id: "deepseek-v4-pro",
 			name: "GPT 5.6 Sol",
-			provider: "azure-openai-responses",
+			provider: "deepseek",
 		};
 		const codexModel: Model<"anthropic-messages"> = {
 			...mockModels[1],
-			id: "gpt-5.6-sol",
+			id: "deepseek-v4-pro",
 			name: "GPT 5.6 Sol",
-			provider: "openai-codex",
+			provider: "minimax",
 		};
 		const registry = {
 			getModels: () => [azureModel, codexModel],
-			hasConfiguredAuth: (provider: string) => provider === "openai-codex",
+			hasConfiguredAuth: (provider: string) => provider === "deepseek",
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
-			cliModel: "gpt-5.6-sol",
+			cliModel: "deepseek-v4-pro",
 			modelRuntime: registry,
 		});
 
 		expect(result.error).toBeUndefined();
-		expect(result.model?.provider).toBe("openai-codex");
-		expect(result.model?.id).toBe("gpt-5.6-sol");
+		expect(result.model?.provider).toBe("deepseek");
+		expect(result.model?.id).toBe("deepseek-v4-pro");
 	});
 
 	test("requires an explicit provider for an ambiguous bare exact model id without a unique authenticated provider", () => {
 		const azureModel: Model<"anthropic-messages"> = {
 			...mockModels[1],
-			id: "gpt-5.6-sol",
+			id: "deepseek-v4-pro",
 			name: "GPT 5.6 Sol",
-			provider: "azure-openai-responses",
+			provider: "deepseek",
 		};
 		const codexModel: Model<"anthropic-messages"> = {
 			...mockModels[1],
-			id: "gpt-5.6-sol",
+			id: "deepseek-v4-pro",
 			name: "GPT 5.6 Sol",
-			provider: "openai-codex",
+			provider: "minimax",
 		};
 		const registry = {
 			getModels: () => [azureModel, codexModel],
@@ -474,14 +477,14 @@ describe("resolveCliModel", () => {
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
-			cliModel: "gpt-5.6-sol",
+			cliModel: "deepseek-v4-pro",
 			modelRuntime: registry,
 		});
 
 		expect(result.model).toBeUndefined();
-		expect(result.error).toContain('Model "gpt-5.6-sol" is ambiguous across providers');
-		expect(result.error).toContain("azure-openai-responses/gpt-5.6-sol");
-		expect(result.error).toContain("openai-codex/gpt-5.6-sol");
+		expect(result.error).toContain('Model "deepseek-v4-pro" is ambiguous across providers');
+		expect(result.error).toContain("deepseek/deepseek-v4-pro");
+		expect(result.error).toContain("minimax/deepseek-v4-pro");
 		expect(result.error).toContain("Use --provider or provider/model");
 	});
 
@@ -504,7 +507,7 @@ describe("resolveCliModel", () => {
 			id: "zai/glm-5",
 			name: "GLM-5",
 			api: "anthropic-messages",
-			provider: "vercel-ai-gateway",
+			provider: "deepseek",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
 			input: ["text"],
@@ -706,17 +709,15 @@ describe("resolveCliModel", () => {
 });
 
 describe("default model selection", () => {
-	test("openai defaults track current models", () => {
-		expect(defaultModelPerProvider.openai).toBe("gpt-5.5");
-		expect(defaultModelPerProvider["openai-codex"]).toBe("gpt-5.5");
+	test("deepseek defaults track current models", () => {
+		expect(defaultModelPerProvider.deepseek).toBe("deepseek-v4-pro");
 	});
 
-	test("zai, minimax, cerebras, and ant-ling defaults track current models", () => {
+	test("zai, minimax, and ant-ling defaults track current models", () => {
 		expect(defaultModelPerProvider.zai).toBe("glm-5.3");
 		expect(defaultModelPerProvider["zai-coding-cn"]).toBe("glm-5.3");
 		expect(defaultModelPerProvider.minimax).toBe("MiniMax-M2.7");
 		expect(defaultModelPerProvider["minimax-cn"]).toBe("MiniMax-M2.7");
-		expect(defaultModelPerProvider.cerebras).toBe("gpt-oss-120b");
 		expect(defaultModelPerProvider["ant-ling"]).toBe("Ring-2.6-1T");
 	});
 
@@ -728,14 +729,6 @@ describe("default model selection", () => {
 				`${provider} default ${defaultId} should exist in its generated catalog`,
 			).toBe(true);
 		}
-	});
-
-	test("ai-gateway default tracks current model", () => {
-		expect(defaultModelPerProvider["vercel-ai-gateway"]).toBe("zai/glm-5.1");
-	});
-
-	test("xai default tracks current model", () => {
-		expect(defaultModelPerProvider.xai).toBe("grok-4.6");
 	});
 
 	test("qwen token plan individual default tracks current model", () => {
@@ -764,7 +757,7 @@ describe("default model selection", () => {
 			id: "anthropic/claude-opus-4-6",
 			name: "Claude Opus 4.6",
 			api: "anthropic-messages",
-			provider: "vercel-ai-gateway",
+			provider: "deepseek",
 			baseUrl: "https://ai-gateway.vercel.sh",
 			reasoning: true,
 			input: ["text", "image"],
@@ -783,7 +776,7 @@ describe("default model selection", () => {
 			modelRuntime: registry,
 		});
 
-		expect(result.model?.provider).toBe("vercel-ai-gateway");
+		expect(result.model?.provider).toBe("deepseek");
 		expect(result.model?.id).toBe("anthropic/claude-opus-4-6");
 	});
 
@@ -828,8 +821,8 @@ describe("default model selection", () => {
 
 	describe("persisted default model scoping", () => {
 		const tempDirs: string[] = [];
-		const sonnet = getModel("anthropic", "claude-sonnet-4-5")!;
-		const opus = getModel("anthropic", "claude-opus-4-8")!;
+		const sonnet = getModel("minimax", "MiniMax-M2.7")!;
+		const opus = getModel("kimi-coding", "kimi-for-coding")!;
 
 		afterEach(() => {
 			for (const dir of tempDirs.splice(0)) {
@@ -847,7 +840,10 @@ describe("default model selection", () => {
 				settingsManager.setEnabledModels(options.persistedScope);
 			}
 
-			const authStorage = AuthStorage.inMemory({ anthropic: { type: "api_key", key: "test-key" } });
+			const authStorage = AuthStorage.inMemory({
+				minimax: { type: "api_key", key: "test-key" },
+				"kimi-coding": { type: "api_key", key: "test-key" },
+			});
 			const modelRuntime = getModelRuntime(await createModelRegistry(authStorage, join(tempDir, "models.json")));
 			const agent = new Agent({
 				initialState: {

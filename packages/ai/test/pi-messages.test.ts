@@ -70,7 +70,7 @@ function createModel(baseUrl: string): Model<"pi-messages"> {
 		id: "auto",
 		name: "Radius Auto",
 		api: "pi-messages",
-		provider: "radius",
+		provider: "deepseek",
 		baseUrl,
 		reasoning: false,
 		input: ["text"],
@@ -137,7 +137,7 @@ describe("pi-messages", () => {
 		expect(message.usage).toEqual(usage);
 		expect(message.responseId).toBe("resp_1");
 		expect(message.model).toBe("auto");
-		expect(message.provider).toBe("radius");
+		expect(message.provider).toBe("deepseek");
 		expect(message.content).toEqual([
 			{ type: "text", text: "Hello", textSignature: undefined },
 			{ type: "toolCall", id: "call_1", name: "read", arguments: { path: "a.txt" } },
@@ -159,7 +159,7 @@ describe("pi-messages", () => {
 
 	it("appends debug=1 and reports response headers via onResponse", async () => {
 		const { baseUrl, requests } = await startServer({
-			headers: { "x-pi-gateway-upstream-provider": "anthropic" },
+			headers: { "x-pi-gateway-upstream-provider": "minimax" },
 			events: [{ type: "done", reason: "stop", usage }],
 		});
 		const model = createModel(baseUrl);
@@ -176,7 +176,7 @@ describe("pi-messages", () => {
 
 		expect(message.stopReason).toBe("stop");
 		expect(requests[0].url).toBe("/v1/messages?debug=1");
-		expect(observedHeaders?.["x-pi-gateway-upstream-provider"]).toBe("anthropic");
+		expect(observedHeaders?.["x-pi-gateway-upstream-provider"]).toBe("minimax");
 	});
 
 	it("surfaces backend error responses with diagnostics", async () => {

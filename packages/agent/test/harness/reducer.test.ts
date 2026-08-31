@@ -49,13 +49,13 @@ function assistantMessage(
 		role: "assistant",
 		content,
 		api: "openai-responses",
-		provider: "openai",
+		provider: "deepseek",
 		model: "test-model",
 		usage,
 		stopReason,
 		timestamp: 1,
 		...(stopReason === "deferred"
-			? { deferred: { provider: "openai", modelId: "test-model", api: "openai-responses", id: "deferred-1" } }
+			? { deferred: { provider: "deepseek", modelId: "test-model", api: "openai-responses", id: "deferred-1" } }
 			: {}),
 	};
 }

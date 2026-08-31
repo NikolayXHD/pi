@@ -17,9 +17,9 @@ describe.skipIf(!process.env.OPENAI_API_KEY || !process.env.ANTHROPIC_API_KEY)(
 	"OpenAI Responses reasoning replay e2e",
 	() => {
 		it("skips reasoning-only history after an aborted turn", { retry: 2 }, async () => {
-			const model = getModel("openai", "gpt-5-mini");
+			const model = getModel("deepseek", "deepseek-v4-pro");
 
-			const apiKey = getEnvApiKey("openai");
+			const apiKey = getEnvApiKey("deepseek");
 			if (!apiKey) {
 				throw new Error("Missing OPENAI_API_KEY");
 			}
@@ -89,10 +89,10 @@ describe.skipIf(!process.env.OPENAI_API_KEY || !process.env.ANTHROPIC_API_KEY)(
 			// 5. Without fix: OpenAI returns 400 "function_call without required reasoning item"
 			// 6. With fix: tool calls/results converted to text, conversation continues
 
-			const modelA = getModel("openai", "gpt-5-mini");
-			const modelB = getModel("openai", "gpt-5.5");
+			const modelA = getModel("deepseek", "deepseek-v4-pro");
+			const modelB = getModel("deepseek", "deepseek-v4-pro");
 
-			const apiKey = getEnvApiKey("openai");
+			const apiKey = getEnvApiKey("deepseek");
 			if (!apiKey) {
 				throw new Error("Missing OPENAI_API_KEY");
 			}
@@ -188,11 +188,11 @@ describe.skipIf(!process.env.OPENAI_API_KEY || !process.env.ANTHROPIC_API_KEY)(
 			// 4. Tool call ID is Anthropic format (toolu_xxx), no OpenAI pairing history
 			// 5. Should work because foreign IDs have no pairing expectation
 
-			const anthropicModel = getModel("anthropic", "claude-sonnet-4-5");
-			const codexModel = getModel("openai", "gpt-5.5");
+			const anthropicModel = getModel("minimax", "MiniMax-M2.7");
+			const codexModel = getModel("deepseek", "deepseek-v4-pro");
 
-			const anthropicApiKey = getEnvApiKey("anthropic");
-			const openaiApiKey = getEnvApiKey("openai");
+			const anthropicApiKey = getEnvApiKey("minimax");
+			const openaiApiKey = getEnvApiKey("deepseek");
 			if (!anthropicApiKey || !openaiApiKey) {
 				throw new Error("Missing API keys");
 			}

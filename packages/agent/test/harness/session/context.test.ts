@@ -13,8 +13,8 @@ function assistantMessage(text: string): AssistantMessage {
 		role: "assistant",
 		content: [{ type: "text", text }],
 		api: "anthropic-messages",
-		provider: "anthropic",
-		model: "claude-sonnet-4-5",
+		provider: "minimax",
+		model: "MiniMax-M2.7",
 		usage: {
 			input: 0,
 			output: 0,
@@ -51,7 +51,16 @@ describe("v4 session context", () => {
 				},
 				2,
 			),
-			entry({ type: "model_change", id: "model", parentId: "compact", provider: "openai", modelId: "gpt-5" }, 3),
+			entry(
+				{
+					type: "model_change",
+					id: "model",
+					parentId: "compact",
+					provider: "deepseek",
+					modelId: "deepseek-v4-pro",
+				},
+				3,
+			),
 			entry({ type: "thinking_level_change", id: "thinking", parentId: "model", thinkingLevel: "high" }, 4),
 			entry({ type: "message", id: "tail", parentId: "thinking", message: userMessage("tail") }, 5),
 		];
@@ -63,7 +72,7 @@ describe("v4 session context", () => {
 			"assistant",
 			"user",
 		]);
-		expect(context.model).toEqual({ provider: "openai", modelId: "gpt-5" });
+		expect(context.model).toEqual({ provider: "deepseek", modelId: "deepseek-v4-pro" });
 		expect(context.thinkingLevel).toBe("high");
 	});
 
@@ -105,7 +114,7 @@ describe("v4 session context", () => {
 			...assistantMessage(""),
 			content: [],
 			stopReason: "deferred",
-			deferred: { provider: "openai", modelId: "gpt-5", api: "openai-responses", id: "response-1" },
+			deferred: { provider: "deepseek", modelId: "deepseek-v4-pro", api: "openai-responses", id: "response-1" },
 		};
 		const entries: Entry[] = [
 			entry({ type: "message", id: "user", parentId: null, message: userMessage("hello") }, 1),

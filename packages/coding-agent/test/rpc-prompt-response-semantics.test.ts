@@ -61,8 +61,8 @@ function createAssistantMessage(text: string): AssistantMessage {
 		role: "assistant",
 		content: [{ type: "text", text }],
 		api: "anthropic-messages",
-		provider: "anthropic",
-		model: "claude-sonnet-4-5",
+		provider: "minimax",
+		model: "MiniMax-M2.7",
 		usage: {
 			input: 0,
 			output: 0,
@@ -102,7 +102,7 @@ async function createRuntimeHost(options: { withAuth: boolean; responseDelayMs: 
 	const tempDir = join(tmpdir(), `pi-rpc-prompt-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 	mkdirSync(tempDir, { recursive: true });
 
-	const model = options.model ?? getModel("anthropic", "claude-sonnet-4-5");
+	const model = options.model ?? getModel("minimax", "MiniMax-M2.7");
 	if (!model) {
 		throw new Error("Test model not found");
 	}
@@ -131,7 +131,7 @@ async function createRuntimeHost(options: { withAuth: boolean; responseDelayMs: 
 	const authStorage = AuthStorage.create(join(tempDir, "auth.json"));
 	const modelRegistry = await createInMemoryModelRegistry(authStorage);
 	if (options.withAuth) {
-		await authStorage.modify("anthropic", async () => ({ type: "api_key", key: "test-key" }));
+		await authStorage.modify("minimax", async () => ({ type: "api_key", key: "test-key" }));
 	}
 
 	const session = new AgentSession({

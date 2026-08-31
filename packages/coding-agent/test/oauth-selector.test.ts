@@ -28,7 +28,7 @@ describe("OAuthSelectorComponent", () => {
 		).prototype.getLoginProviderOptions;
 		const providers = [
 			{
-				id: "anthropic",
+				id: "minimax",
 				name: "Anthropic",
 				auth: {
 					oauth: { name: "Anthropic (Claude Pro/Max)", login: async () => ({}) },
@@ -54,7 +54,7 @@ describe("OAuthSelectorComponent", () => {
 		const apiKeyOptions = getLoginProviderOptions.call(fakeThis, "api_key");
 		expect(apiKeyOptions).toMatchObject([
 			{
-				id: "anthropic",
+				id: "minimax",
 				name: "Anthropic",
 				authType: "api_key",
 				method: { name: "Anthropic API key" },
@@ -67,14 +67,14 @@ describe("OAuthSelectorComponent", () => {
 			},
 		]);
 		expect(getLoginProviderOptions.call(fakeThis, "oauth")).toMatchObject([
-			{ id: "anthropic", name: "Anthropic", authType: "oauth" },
+			{ id: "minimax", name: "Anthropic", authType: "oauth" },
 		]);
 	});
 
 	it("renders an option without compiled auth status as unconfigured", () => {
 		const selector = new OAuthSelectorComponent(
 			"login",
-			[{ id: "google", name: "Google", authType: "api_key", status: undefined }],
+			[{ id: "deepseek", name: "Google", authType: "api_key", status: undefined }],
 			() => {},
 			() => {},
 		);
@@ -87,7 +87,7 @@ describe("OAuthSelectorComponent", () => {
 	it("shows OAuth auth distinctly in the API key selector", () => {
 		const selector = new OAuthSelectorComponent(
 			"login",
-			[{ id: "anthropic", name: "Anthropic", authType: "api_key", status: { type: "oauth", source: "OAuth" } }],
+			[{ id: "minimax", name: "Anthropic", authType: "api_key", status: { type: "oauth", source: "OAuth" } }],
 			() => {},
 			() => {},
 		);
@@ -99,7 +99,14 @@ describe("OAuthSelectorComponent", () => {
 	it("shows environment API key auth as configured", () => {
 		const selector = new OAuthSelectorComponent(
 			"login",
-			[{ id: "openai", name: "OpenAI", authType: "api_key", status: { type: "api_key", source: "OPENAI_API_KEY" } }],
+			[
+				{
+					id: "deepseek",
+					name: "OpenAI",
+					authType: "api_key",
+					status: { type: "api_key", source: "OPENAI_API_KEY" },
+				},
+			],
 			() => {},
 			() => {},
 		);

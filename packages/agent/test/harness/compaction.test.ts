@@ -69,8 +69,8 @@ function createAssistantMessage(text: string, usage = createMockUsage(100, 50)):
 		role: "assistant",
 		content: [{ type: "text", text }],
 		api: "anthropic-messages",
-		provider: "anthropic",
-		model: "claude-sonnet-4-5",
+		provider: "minimax",
+		model: "MiniMax-M2.7",
 		usage,
 		stopReason: "stop",
 		timestamp: Date.now(),
@@ -200,7 +200,7 @@ describe("harness compaction", () => {
 
 	it("covers cut-point and turn-start edge cases", () => {
 		const thinking = createThinkingLevelEntry("high");
-		const modelChange = createModelChangeEntry("openai", "gpt-4", thinking.id);
+		const modelChange = createModelChangeEntry("deepseek", "deepseek-v4-pro", thinking.id);
 		expect(findCutPoint([thinking, modelChange], 0, 2, 1)).toEqual({
 			firstKeptEntryIndex: 0,
 			turnStartIndex: -1,
@@ -358,11 +358,11 @@ describe("harness compaction", () => {
 
 	it("tracks model and thinking level changes in built context", () => {
 		const user = createMessageEntry(createUserMessage("1"));
-		const modelChange = createModelChangeEntry("openai", "gpt-4", user.id);
+		const modelChange = createModelChangeEntry("deepseek", "deepseek-v4-pro", user.id);
 		const assistant = createMessageEntry(createAssistantMessage("a"), modelChange.id);
 		const thinkingChange = createThinkingLevelEntry("high", assistant.id);
 		const loaded = buildSessionContext([user, modelChange, assistant, thinkingChange]);
-		expect(loaded.model).toEqual({ provider: "anthropic", modelId: "claude-sonnet-4-5" });
+		expect(loaded.model).toEqual({ provider: "minimax", modelId: "MiniMax-M2.7" });
 		expect(loaded.thinkingLevel).toBe("high");
 	});
 

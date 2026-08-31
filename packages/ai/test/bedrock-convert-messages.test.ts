@@ -62,7 +62,7 @@ const baseModel: Model<"bedrock-converse-stream"> = {
 	id: "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
 	name: "Claude Sonnet 4.5 (US)",
 	api: "bedrock-converse-stream",
-	provider: "amazon-bedrock",
+	provider: "deepseek",
 	baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
 	reasoning: true,
 	input: ["text", "image"],
@@ -202,7 +202,7 @@ describe("bedrock convertMessages skips unknown content types", () => {
 					{ type: "unknown", data: "foo" },
 				] as any,
 				api: "bedrock-converse-stream",
-				provider: "amazon-bedrock",
+				provider: "deepseek",
 				model: baseModel.id,
 				usage: {
 					input: 0,
@@ -284,7 +284,7 @@ describe("bedrock convertMessages skips unknown content types", () => {
 				role: "assistant",
 				content: [{ type: "text", text: String.fromCharCode(0xd83d) }],
 				api: "bedrock-converse-stream",
-				provider: "amazon-bedrock",
+				provider: "deepseek",
 				model: baseModel.id,
 				usage: {
 					input: 0,
@@ -330,7 +330,7 @@ describe("bedrock convertMessages skips unknown content types", () => {
 				role: "assistant",
 				content: [{ type: "unknown", data: "foo" }] as any,
 				api: "bedrock-converse-stream",
-				provider: "amazon-bedrock",
+				provider: "deepseek",
 				model: baseModel.id,
 				usage: {
 					input: 0,
@@ -370,7 +370,7 @@ describe("bedrock convertMessages skips unknown content types", () => {
 					},
 				],
 				api: "bedrock-converse-stream",
-				provider: "amazon-bedrock",
+				provider: "deepseek",
 				model: baseModel.id,
 				usage: {
 					input: 0,

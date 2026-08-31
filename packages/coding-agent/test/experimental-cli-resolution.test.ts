@@ -12,9 +12,9 @@ describe("experimental CLI command composition", () => {
 			"--auth-token",
 			"secret",
 			"--provider",
-			"anthropic",
+			"minimax",
 			"--model",
-			"claude-sonnet",
+			"MiniMax-M2.7",
 			"--thinking",
 			"high",
 			"inspect",
@@ -27,8 +27,8 @@ describe("experimental CLI command composition", () => {
 				listen: [{ transport: "unix", path: "/tmp/pi.sock" }],
 				auth: { type: "token", token: "secret" },
 				options: {
-					provider: "anthropic",
-					model: "claude-sonnet",
+					provider: "minimax",
+					model: "MiniMax-M2.7",
 					thinking: "high",
 					messages: ["inspect"],
 				},
@@ -53,7 +53,7 @@ describe("experimental CLI command composition", () => {
 	});
 
 	test("rejects existing options that the server command does not support yet", () => {
-		expect(experimentalCli.parse(["server", "--model", "claude-sonnet", "prompt"])).toEqual({
+		expect(experimentalCli.parse(["server", "--model", "MiniMax-M2.7", "prompt"])).toEqual({
 			ok: false,
 			errors: [UNSUPPORTED_SERVER_OPTIONS],
 		});
@@ -67,7 +67,7 @@ describe("experimental CLI command composition", () => {
 	});
 
 	test("reports existing parser errors before capability errors", () => {
-		expect(experimentalCli.parse(["client", "--tui-mode", "wrong", "--model", "claude-sonnet"])).toEqual({
+		expect(experimentalCli.parse(["client", "--tui-mode", "wrong", "--model", "MiniMax-M2.7"])).toEqual({
 			ok: false,
 			errors: ['Invalid TUI mode "wrong". Valid values: regular, fullscreen', UNSUPPORTED_CLIENT_OPTIONS],
 		});

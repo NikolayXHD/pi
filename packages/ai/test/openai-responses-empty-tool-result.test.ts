@@ -25,7 +25,7 @@ function buildEmptyToolResult(toolCallId: string, timestamp: number): ToolResult
 
 describe("OpenAI Responses convertResponsesMessages empty tool result", () => {
 	it("uses '(no tool output)' placeholder for empty tool results without images", () => {
-		const model = getModel("openai", "gpt-4o-mini");
+		const model = getModel("deepseek", "deepseek-v4-pro");
 		const now = Date.now();
 		const assistant: AssistantMessage = {
 			role: "assistant",
@@ -46,7 +46,7 @@ describe("OpenAI Responses convertResponsesMessages empty tool result", () => {
 			],
 		};
 
-		const input = convertResponsesMessages(model, context, new Set(["openai", "openai-codex", "opencode"]));
+		const input = convertResponsesMessages(model, context, new Set(["deepseek", "deepseek", "deepseek"]));
 		const functionCallOutput = input.find((item) => item.type === "function_call_output") as
 			| { type: "function_call_output"; output: string }
 			| undefined;

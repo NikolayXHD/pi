@@ -30,7 +30,7 @@ describe("AuthStorage", () => {
 		try {
 			writeAuthJson({ anthropic: { type: "api_key", key: "$TEST_AUTH_STORAGE_KEY" } });
 			const storage = AuthStorage.create(authJsonPath);
-			expect(await storage.read("anthropic")).toEqual({ type: "api_key", key: "environment-key" });
+			expect(await storage.read("minimax")).toEqual({ type: "api_key", key: "environment-key" });
 		} finally {
 			if (original === undefined) delete process.env.TEST_AUTH_STORAGE_KEY;
 			else process.env.TEST_AUTH_STORAGE_KEY = original;
@@ -40,7 +40,7 @@ describe("AuthStorage", () => {
 	test("resolves command-backed API-key credentials", async () => {
 		writeAuthJson({ anthropic: { type: "api_key", key: "!printf 'command-key'" } });
 		const storage = AuthStorage.create(authJsonPath);
-		expect(await storage.read("anthropic")).toEqual({ type: "api_key", key: "command-key" });
+		expect(await storage.read("minimax")).toEqual({ type: "api_key", key: "command-key" });
 	});
 
 	test("returns OAuth credentials unchanged", async () => {
@@ -51,7 +51,7 @@ describe("AuthStorage", () => {
 			expires: Date.now() + 60_000,
 		};
 		const storage = AuthStorage.inMemory({ anthropic: credential });
-		expect(await storage.read("anthropic")).toEqual(credential);
+		expect(await storage.read("minimax")).toEqual(credential);
 	});
 
 	test("credential-scoped env takes precedence and remains inspectable", async () => {
@@ -63,7 +63,7 @@ describe("AuthStorage", () => {
 			},
 		});
 		const storage = AuthStorage.create(authJsonPath);
-		expect(await storage.read("anthropic")).toMatchObject({
+		expect(await storage.read("minimax")).toMatchObject({
 			key: "scoped-value",
 			env: { SCOPED_KEY: "scoped-value", REGION: "test-region" },
 		});
@@ -81,19 +81,19 @@ describe("AuthStorage", () => {
 		});
 
 		const [anthropic, openai, credentials] = await Promise.all([
-			first.read("anthropic", { signal: new AbortController().signal }),
-			second.read("openai", { signal: new AbortController().signal }),
+			first.read("minimax", { signal: new AbortController().signal }),
+			second.read("deepseek", { signal: new AbortController().signal }),
 			first.list({ signal: new AbortController().signal }),
 		]);
 		expect(anthropic).toEqual({ type: "api_key", key: "new" });
 		expect(openai).toEqual({ type: "api_key", key: "openai-key" });
 		expect(credentials).toEqual([
-			{ providerId: "anthropic", type: "api_key" },
-			{ providerId: "openai", type: "api_key" },
+			{ providerId: "minimax", type: "api_key" },
+			{ providerId: "deepseek", type: "api_key" },
 		]);
 		expect(lockSpy).toHaveBeenCalledTimes(1);
 
-		await expect(second.read("anthropic")).resolves.toEqual({ type: "api_key", key: "new" });
+		await expect(second.read("minimax")).resolves.toEqual({ type: "api_key", key: "new" });
 		expect(lockSpy).toHaveBeenCalledTimes(1);
 
 		const otherPath = join(tempDir, "other-auth.json");
@@ -107,7 +107,7 @@ describe("AuthStorage", () => {
 
 		const third = AuthStorage.create(authJsonPath);
 		writeAuthJson({ anthropic: { type: "api_key", key: "newest" } });
-		const [firstReload, thirdReload] = await Promise.all([first.read("anthropic"), third.read("anthropic")]);
+		const [firstReload, thirdReload] = await Promise.all([first.read("minimax"), third.read("minimax")]);
 		expect(firstReload).toEqual({ type: "api_key", key: "newest" });
 		expect(thirdReload).toEqual({ type: "api_key", key: "newest" });
 		expect(lockSpy).toHaveBeenCalledTimes(2);
@@ -128,8 +128,8 @@ describe("AuthStorage", () => {
 		});
 		const firstController = new AbortController();
 		const secondController = new AbortController();
-		const first = storage.read("anthropic", { signal: firstController.signal });
-		const second = storage.read("anthropic", { signal: secondController.signal });
+		const first = storage.read("minimax", { signal: firstController.signal });
+		const second = storage.read("minimax", { signal: secondController.signal });
 
 		firstController.abort();
 		await expect(first).rejects.toMatchObject({ name: "AbortError" });
@@ -150,7 +150,7 @@ describe("AuthStorage", () => {
 		chmodSync(authJsonPath, 0o660);
 		const storage = AuthStorage.create(authJsonPath);
 
-		await storage.modify("anthropic", async () => ({ type: "api_key", key: "new" }));
+		await storage.modify("minimax", async () => ({ type: "api_key", key: "new" }));
 
 		expect(statSync(authJsonPath).mode & 0o777).toBe(0o660);
 	});
@@ -163,7 +163,7 @@ describe("AuthStorage", () => {
 			openai: { type: "api_key", key: "external" },
 		});
 
-		await storage.modify("anthropic", async () => ({ type: "api_key", key: "new" }));
+		await storage.modify("minimax", async () => ({ type: "api_key", key: "new" }));
 
 		expect(JSON.parse(readFileSync(authJsonPath, "utf8"))).toEqual({
 			anthropic: { type: "api_key", key: "new" },
@@ -174,8 +174,8 @@ describe("AuthStorage", () => {
 	test("modify with undefined leaves the current credential unchanged", async () => {
 		writeAuthJson({ anthropic: { type: "api_key", key: "stored" } });
 		const storage = AuthStorage.create(authJsonPath);
-		expect(await storage.modify("anthropic", async () => undefined)).toEqual({ type: "api_key", key: "stored" });
-		expect(await storage.read("anthropic")).toEqual({ type: "api_key", key: "stored" });
+		expect(await storage.modify("minimax", async () => undefined)).toEqual({ type: "api_key", key: "stored" });
+		expect(await storage.read("minimax")).toEqual({ type: "api_key", key: "stored" });
 	});
 
 	test("serializes concurrent modifications", async () => {
@@ -183,8 +183,8 @@ describe("AuthStorage", () => {
 		const first = AuthStorage.create(authJsonPath);
 		const second = AuthStorage.create(authJsonPath);
 		await Promise.all([
-			first.modify("anthropic", async () => ({ type: "api_key", key: "anthropic-key" })),
-			second.modify("openai", async () => ({ type: "api_key", key: "openai-key" })),
+			first.modify("minimax", async () => ({ type: "api_key", key: "anthropic-key" })),
+			second.modify("deepseek", async () => ({ type: "api_key", key: "openai-key" })),
 		]);
 		expect(JSON.parse(readFileSync(authJsonPath, "utf8"))).toEqual({
 			anthropic: { type: "api_key", key: "anthropic-key" },
@@ -203,22 +203,22 @@ describe("AuthStorage", () => {
 			openai: { type: "api_key", key: "openai-key" },
 			google: { type: "api_key", key: "external-key" },
 		});
-		await storage.delete("anthropic");
+		await storage.delete("minimax");
 		await expect(storage.list()).resolves.toEqual([
-			{ providerId: "openai", type: "api_key" },
-			{ providerId: "google", type: "api_key" },
+			{ providerId: "deepseek", type: "api_key" },
+			{ providerId: "deepseek", type: "api_key" },
 		]);
-		expect(await storage.read("anthropic")).toBeUndefined();
-		expect(await storage.read("openai")).toEqual({ type: "api_key", key: "openai-key" });
-		expect(await storage.read("google")).toEqual({ type: "api_key", key: "external-key" });
+		expect(await storage.read("minimax")).toBeUndefined();
+		expect(await storage.read("deepseek")).toEqual({ type: "api_key", key: "openai-key" });
+		expect(await storage.read("deepseek")).toEqual({ type: "api_key", key: "external-key" });
 	});
 
 	test("in-memory storage implements the same credential-store behavior", async () => {
 		const storage = AuthStorage.inMemory({ anthropic: { type: "api_key", key: "initial" } });
-		expect(await storage.read("anthropic")).toEqual({ type: "api_key", key: "initial" });
-		await storage.modify("anthropic", async () => ({ type: "api_key", key: "updated" }));
-		expect(await storage.read("anthropic")).toEqual({ type: "api_key", key: "updated" });
-		await storage.delete("anthropic");
+		expect(await storage.read("minimax")).toEqual({ type: "api_key", key: "initial" });
+		await storage.modify("minimax", async () => ({ type: "api_key", key: "updated" }));
+		expect(await storage.read("minimax")).toEqual({ type: "api_key", key: "updated" });
+		await storage.delete("minimax");
 		await expect(storage.list()).resolves.toEqual([]);
 	});
 
@@ -227,7 +227,7 @@ describe("AuthStorage", () => {
 		const storage = AuthStorage.create(authJsonPath);
 		const lockSpy = vi.spyOn(lockfile, "lock").mockRejectedValueOnce(new Error("lock unavailable"));
 
-		await expect(storage.modify("openai", async () => ({ type: "api_key", key: "new" }))).rejects.toThrow(
+		await expect(storage.modify("deepseek", async () => ({ type: "api_key", key: "new" }))).rejects.toThrow(
 			"lock unavailable",
 		);
 		expect(JSON.parse(readFileSync(authJsonPath, "utf8"))).toEqual({
@@ -235,7 +235,7 @@ describe("AuthStorage", () => {
 		});
 
 		lockSpy.mockRestore();
-		await storage.modify("openai", async () => ({ type: "api_key", key: "new" }));
+		await storage.modify("deepseek", async () => ({ type: "api_key", key: "new" }));
 		expect(JSON.parse(readFileSync(authJsonPath, "utf8"))).toEqual({
 			anthropic: { type: "api_key", key: "stored" },
 			openai: { type: "api_key", key: "new" },
@@ -377,7 +377,7 @@ describe("AuthStorage", () => {
 		const release = await lockfile.lock(authJsonPath, { realpath: false });
 		const lockSpy = vi.spyOn(lockfile, "lock");
 		const controller = new AbortController();
-		const pending = storage.read("anthropic", { signal: controller.signal });
+		const pending = storage.read("minimax", { signal: controller.signal });
 
 		await new Promise((resolve) => setTimeout(resolve, 10));
 		controller.abort();
@@ -385,7 +385,7 @@ describe("AuthStorage", () => {
 		await release();
 		await new Promise((resolve) => setTimeout(resolve, 150));
 		expect(lockSpy).toHaveBeenCalledTimes(1);
-		await expect(storage.read("anthropic")).resolves.toEqual({ type: "api_key", key: "new-value" });
+		await expect(storage.read("minimax")).resolves.toEqual({ type: "api_key", key: "new-value" });
 	});
 
 	test("serializes in-memory mutations across providers", async () => {
@@ -398,21 +398,21 @@ describe("AuthStorage", () => {
 		const blocked = new Promise<void>((resolve) => {
 			finish = resolve;
 		});
-		const first = storage.modify("anthropic", async () => {
+		const first = storage.modify("minimax", async () => {
 			markStarted?.();
 			await blocked;
 			return { type: "api_key", key: "anthropic-key" };
 		});
 		await started;
 		const secondMutation = vi.fn(async () => ({ type: "api_key" as const, key: "openai-key" }));
-		const second = storage.modify("openai", secondMutation);
+		const second = storage.modify("deepseek", secondMutation);
 		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(secondMutation).not.toHaveBeenCalled();
 
 		finish?.();
 		await Promise.all([first, second]);
-		expect(await storage.read("anthropic")).toEqual({ type: "api_key", key: "anthropic-key" });
-		expect(await storage.read("openai")).toEqual({ type: "api_key", key: "openai-key" });
+		expect(await storage.read("minimax")).toEqual({ type: "api_key", key: "anthropic-key" });
+		expect(await storage.read("deepseek")).toEqual({ type: "api_key", key: "openai-key" });
 	});
 
 	test("cancels a queued in-memory mutation without running it later", async () => {
@@ -425,7 +425,7 @@ describe("AuthStorage", () => {
 		const blocked = new Promise<void>((resolve) => {
 			finish = resolve;
 		});
-		const first = storage.modify("anthropic", async () => {
+		const first = storage.modify("minimax", async () => {
 			markStarted?.();
 			await blocked;
 			return { type: "api_key", key: "anthropic-key" };
@@ -433,7 +433,7 @@ describe("AuthStorage", () => {
 		await started;
 		const controller = new AbortController();
 		const secondMutation = vi.fn(async () => ({ type: "api_key" as const, key: "openai-key" }));
-		const second = storage.modify("openai", secondMutation, { signal: controller.signal });
+		const second = storage.modify("deepseek", secondMutation, { signal: controller.signal });
 
 		controller.abort();
 		await expect(second).rejects.toMatchObject({ name: "AbortError" });
@@ -442,7 +442,7 @@ describe("AuthStorage", () => {
 		await first;
 		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(secondMutation).not.toHaveBeenCalled();
-		expect(await storage.read("openai")).toBeUndefined();
+		expect(await storage.read("deepseek")).toBeUndefined();
 	});
 
 	test("preserves the stored credential after cancelling an active refresh mutation", async () => {
@@ -545,7 +545,7 @@ describe("AuthStorage", () => {
 		writeAuthJson({ anthropic: { type: "api_key", key: "stored" } });
 		const storage = AuthStorage.create(authJsonPath);
 		writeFileSync(authJsonPath, "{invalid-json", "utf8");
-		await expect(storage.modify("openai", async () => ({ type: "api_key", key: "new" }))).rejects.toThrow();
+		await expect(storage.modify("deepseek", async () => ({ type: "api_key", key: "new" }))).rejects.toThrow();
 		expect(readFileSync(authJsonPath, "utf8")).toBe("{invalid-json");
 	});
 });

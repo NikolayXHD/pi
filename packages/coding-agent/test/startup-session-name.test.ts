@@ -45,8 +45,8 @@ function createSessionFile(projectDir: string, sessionFile: string): void {
 				message: {
 					role: "assistant",
 					content: [{ type: "text", text: "hello" }],
-					provider: "anthropic",
-					model: "claude-sonnet-4-5",
+					provider: "minimax",
+					model: "MiniMax-M2.7",
 					timestamp: Date.now(),
 				},
 			},

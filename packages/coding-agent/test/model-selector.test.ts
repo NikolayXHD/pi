@@ -26,8 +26,8 @@ describe("model selector", () => {
 		vi.spyOn(harness.session.modelRuntime, "refresh").mockResolvedValue({
 			aborted: false,
 			errors: new Map([
-				["openai", new Error("unavailable")],
-				["anthropic", new Error("unavailable")],
+				["deepseek", new Error("unavailable")],
+				["minimax", new Error("unavailable")],
 			]),
 		});
 

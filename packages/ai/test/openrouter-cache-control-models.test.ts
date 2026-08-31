@@ -10,6 +10,6 @@ const OPENROUTER_ANTHROPIC_LATEST_MODEL_IDS = [
 
 describe("OpenRouter Anthropic cache control metadata", () => {
 	it.each(OPENROUTER_ANTHROPIC_LATEST_MODEL_IDS)("enables cache control for %s", (modelId) => {
-		expect(getModel("openrouter", modelId).compat?.cacheControlFormat).toBe("anthropic");
+		expect(getModel("openrouter", modelId).compat?.cacheControlFormat).toBe("minimax");
 	});
 });

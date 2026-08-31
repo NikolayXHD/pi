@@ -42,7 +42,7 @@ const DIRECT_ACCESS_TTL = 25 * 60 * 1000;
 // Models - exported for use by tests
 // =============================================================================
 
-type Backend = "anthropic" | "openai";
+type Backend = "minimax" | "deepseek";
 
 interface GitLabModel {
 	id: string;
@@ -60,9 +60,9 @@ interface GitLabModel {
 export const MODELS: GitLabModel[] = [
 	// Anthropic
 	{
-		id: "claude-opus-4-8",
+		id: "MiniMax-M2.7",
 		name: "Claude Opus 4.8",
-		backend: "anthropic",
+		backend: "minimax",
 		baseUrl: ANTHROPIC_PROXY_URL,
 		reasoning: true,
 		thinkingLevelMap: { xhigh: "max" },
@@ -72,9 +72,9 @@ export const MODELS: GitLabModel[] = [
 		maxTokens: 128000,
 	},
 	{
-		id: "claude-sonnet-4-6",
+		id: "MiniMax-M2.7",
 		name: "Claude Sonnet 4.6",
-		backend: "anthropic",
+		backend: "minimax",
 		baseUrl: ANTHROPIC_PROXY_URL,
 		reasoning: true,
 		thinkingLevelMap: { xhigh: "max" },
@@ -84,9 +84,9 @@ export const MODELS: GitLabModel[] = [
 		maxTokens: 64000,
 	},
 	{
-		id: "claude-opus-4-5-20251101",
+		id: "MiniMax-M2.7",
 		name: "Claude Opus 4.5",
-		backend: "anthropic",
+		backend: "minimax",
 		baseUrl: ANTHROPIC_PROXY_URL,
 		reasoning: true,
 		thinkingLevelMap: { xhigh: "max" },
@@ -96,9 +96,9 @@ export const MODELS: GitLabModel[] = [
 		maxTokens: 32000,
 	},
 	{
-		id: "claude-sonnet-4-5-20250929",
+		id: "MiniMax-M2.7",
 		name: "Claude Sonnet 4.5",
-		backend: "anthropic",
+		backend: "minimax",
 		baseUrl: ANTHROPIC_PROXY_URL,
 		reasoning: true,
 		thinkingLevelMap: { xhigh: "max" },
@@ -108,9 +108,9 @@ export const MODELS: GitLabModel[] = [
 		maxTokens: 16384,
 	},
 	{
-		id: "claude-haiku-4-5-20251001",
+		id: "MiniMax-M2.7",
 		name: "Claude Haiku 4.5",
-		backend: "anthropic",
+		backend: "minimax",
 		baseUrl: ANTHROPIC_PROXY_URL,
 		reasoning: true,
 		thinkingLevelMap: { xhigh: "max" },
@@ -121,9 +121,9 @@ export const MODELS: GitLabModel[] = [
 	},
 	// OpenAI (all use Responses API)
 	{
-		id: "gpt-5.5-2026-04-23",
+		id: "deepseek-v4-pro",
 		name: "GPT-5.5",
-		backend: "openai",
+		backend: "deepseek",
 		baseUrl: OPENAI_PROXY_URL,
 		reasoning: true,
 		input: ["text", "image"],
@@ -132,9 +132,9 @@ export const MODELS: GitLabModel[] = [
 		maxTokens: 128000,
 	},
 	{
-		id: "gpt-5.1-2025-11-13",
+		id: "deepseek-v4-pro",
 		name: "GPT-5.1",
-		backend: "openai",
+		backend: "deepseek",
 		baseUrl: OPENAI_PROXY_URL,
 		reasoning: true,
 		input: ["text", "image"],
@@ -143,9 +143,9 @@ export const MODELS: GitLabModel[] = [
 		maxTokens: 16384,
 	},
 	{
-		id: "gpt-5-mini-2025-08-07",
+		id: "deepseek-v4-pro",
 		name: "GPT-5 Mini",
-		backend: "openai",
+		backend: "deepseek",
 		baseUrl: OPENAI_PROXY_URL,
 		reasoning: true,
 		input: ["text", "image"],
@@ -154,9 +154,9 @@ export const MODELS: GitLabModel[] = [
 		maxTokens: 16384,
 	},
 	{
-		id: "gpt-5-codex",
+		id: "deepseek-v4-pro",
 		name: "GPT-5 Codex",
-		backend: "openai",
+		backend: "deepseek",
 		baseUrl: OPENAI_PROXY_URL,
 		reasoning: true,
 		input: ["text", "image"],
@@ -325,7 +325,7 @@ export function streamGitLabDuo(
 			const streamOptions = { ...options, apiKey: "gitlab-duo", headers };
 
 			const innerStream =
-				cfg.backend === "anthropic"
+				cfg.backend === "minimax"
 					? anthropicMessagesApi().streamSimple(
 							{
 								...(modelWithBaseUrl as Model<"anthropic-messages">),

@@ -53,9 +53,9 @@ describe("parseArgs", () => {
 		});
 
 		test("does not consume options after -p as prompts", () => {
-			const result = parseArgs(["-p", "--provider", "openai", "Say hi."]);
+			const result = parseArgs(["-p", "--provider", "deepseek", "Say hi."]);
 			expect(result.print).toBe(true);
-			expect(result.provider).toBe("openai");
+			expect(result.provider).toBe("deepseek");
 			expect(result.messages).toEqual(["Say hi."]);
 		});
 	});
@@ -86,13 +86,13 @@ describe("parseArgs", () => {
 
 	describe("flags with values", () => {
 		test("parses --provider", () => {
-			const result = parseArgs(["--provider", "openai"]);
-			expect(result.provider).toBe("openai");
+			const result = parseArgs(["--provider", "deepseek"]);
+			expect(result.provider).toBe("deepseek");
 		});
 
 		test("parses --model", () => {
-			const result = parseArgs(["--model", "gpt-4o"]);
-			expect(result.model).toBe("gpt-4o");
+			const result = parseArgs(["--model", "deepseek-v4-pro"]);
+			expect(result.model).toBe("deepseek-v4-pro");
 		});
 
 		test("parses --api-key", () => {
@@ -152,8 +152,8 @@ describe("parseArgs", () => {
 		});
 
 		test("parses --models as comma-separated list", () => {
-			const result = parseArgs(["--models", "gpt-4o,claude-sonnet,gemini-pro"]);
-			expect(result.models).toEqual(["gpt-4o", "claude-sonnet", "gemini-pro"]);
+			const result = parseArgs(["--models", "deepseek-v4-pro"]);
+			expect(result.models).toEqual(["deepseek-v4-pro", "MiniMax-M2.7", "deepseek-v4-pro"]);
 		});
 	});
 
@@ -184,10 +184,10 @@ describe("parseArgs", () => {
 		});
 
 		test("works alongside other flags", () => {
-			const result = parseArgs(["--name", "named-run", "--print", "--model", "gpt-4o", "hello"]);
+			const result = parseArgs(["--name", "named-run", "--print", "--model", "deepseek-v4-pro", "hello"]);
 			expect(result.name).toBe("named-run");
 			expect(result.print).toBe(true);
-			expect(result.model).toBe("gpt-4o");
+			expect(result.model).toBe("deepseek-v4-pro");
 			expect(result.messages).toEqual(["hello"]);
 		});
 	});
@@ -480,17 +480,17 @@ describe("parseArgs", () => {
 		test("parses multiple flags together", () => {
 			const result = parseArgs([
 				"--provider",
-				"anthropic",
+				"minimax",
 				"--model",
-				"claude-sonnet",
+				"MiniMax-M2.7",
 				"--print",
 				"--thinking",
 				"high",
 				"@prompt.md",
 				"Do the task",
 			]);
-			expect(result.provider).toBe("anthropic");
-			expect(result.model).toBe("claude-sonnet");
+			expect(result.provider).toBe("minimax");
+			expect(result.model).toBe("MiniMax-M2.7");
 			expect(result.print).toBe(true);
 			expect(result.thinking).toBe("high");
 			expect(result.fileArgs).toEqual(["prompt.md"]);

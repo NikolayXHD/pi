@@ -83,8 +83,8 @@ describe("JSONL v4 per-session storage", () => {
 							{ type: "toolCall", id: "call-1", name: "read", arguments: { path: "README.md" } },
 						],
 						api: "anthropic-messages",
-						provider: "anthropic",
-						model: "claude-sonnet-4-5",
+						provider: "minimax",
+						model: "MiniMax-M2.7",
 						usage: createUsage(1),
 						stopReason: "toolUse",
 						timestamp: 2,
@@ -115,7 +115,7 @@ describe("JSONL v4 per-session storage", () => {
 		);
 		committed.push(
 			await session.appendEntry(
-				{ type: "model_change", id: "model", provider: "anthropic", modelId: "claude-sonnet-4-5" },
+				{ type: "model_change", id: "model", provider: "minimax", modelId: "MiniMax-M2.7" },
 				"main",
 			),
 		);

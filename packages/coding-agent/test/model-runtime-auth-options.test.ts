@@ -35,10 +35,10 @@ function testModel(id: string) {
 describe("ModelRuntime auth options", () => {
 	it("accepts a pi-ai CredentialStore", async () => {
 		const credentials = new InMemoryCredentialStore();
-		await credentials.modify("anthropic", async () => ({ type: "api_key", key: "stored-key" }));
+		await credentials.modify("minimax", async () => ({ type: "api_key", key: "stored-key" }));
 		const runtime = await ModelRuntime.create({ credentials, modelsPath: null });
 
-		expect((await runtime.getAuth("anthropic"))?.auth.apiKey).toBe("stored-key");
+		expect((await runtime.getAuth("minimax"))?.auth.apiKey).toBe("stored-key");
 	});
 
 	it("scopes provider availability reads and records refresh failures", async () => {
@@ -58,11 +58,11 @@ describe("ModelRuntime auth options", () => {
 		const runtime = await ModelRuntime.create({ credentials, modelsPath: null });
 
 		reads.length = 0;
-		await runtime.getAvailable("anthropic");
-		expect(new Set(reads)).toEqual(new Set(["anthropic"]));
+		await runtime.getAvailable("minimax");
+		expect(new Set(reads)).toEqual(new Set(["minimax"]));
 
 		failReads = true;
-		await expect(runtime.getAvailable("anthropic")).rejects.toThrow("Credential store read failed for anthropic");
+		await expect(runtime.getAvailable("minimax")).rejects.toThrow("Credential store read failed for anthropic");
 		expect(runtime.getError()).toContain("Availability refresh: Credential store read failed for anthropic");
 
 		failReads = false;
@@ -78,7 +78,7 @@ describe("ModelRuntime auth options", () => {
 			expect.arrayContaining([
 				expect.objectContaining({
 					type: "api_key",
-					provider: expect.objectContaining({ id: "amazon-bedrock", name: "Amazon Bedrock" }),
+					provider: expect.objectContaining({ id: "deepseek", name: "Amazon Bedrock" }),
 					method: expect.objectContaining({ name: "AWS credentials or bearer token" }),
 				}),
 				expect.objectContaining({
@@ -88,21 +88,21 @@ describe("ModelRuntime auth options", () => {
 				}),
 				expect.objectContaining({
 					type: "oauth",
-					provider: expect.objectContaining({ id: "anthropic", name: "Anthropic" }),
+					provider: expect.objectContaining({ id: "minimax", name: "Anthropic" }),
 				}),
 				expect.objectContaining({
 					type: "api_key",
-					provider: expect.objectContaining({ id: "cloudflare-ai-gateway", name: "Cloudflare AI Gateway" }),
+					provider: expect.objectContaining({ id: "deepseek", name: "Cloudflare AI Gateway" }),
 				}),
 				expect.objectContaining({
 					type: "api_key",
-					provider: expect.objectContaining({ id: "cloudflare-workers-ai", name: "Cloudflare Workers AI" }),
+					provider: expect.objectContaining({ id: "deepseek", name: "Cloudflare Workers AI" }),
 				}),
 			]),
 		);
 		expect(authOptions(runtime, "api_key").every((option) => option.type === "api_key")).toBe(true);
 		expect(authOptions(runtime, "oauth").every((option) => option.type === "oauth")).toBe(true);
-		expect(options.some((option) => option.provider.id === "openai-codex" && option.type === "api_key")).toBe(false);
+		expect(options.some((option) => option.provider.id === "deepseek" && option.type === "api_key")).toBe(false);
 	});
 
 	it("attaches the provider's active auth status to every method option", async () => {
@@ -118,9 +118,9 @@ describe("ModelRuntime auth options", () => {
 			modelsPath: null,
 		});
 
-		const options = authOptions(runtime).filter((option) => option.provider.id === "anthropic");
+		const options = authOptions(runtime).filter((option) => option.provider.id === "minimax");
 		expect(options).toHaveLength(2);
-		expect(await runtime.checkAuth("anthropic")).toMatchObject({ type: "oauth" });
+		expect(await runtime.checkAuth("minimax")).toMatchObject({ type: "oauth" });
 	});
 
 	it("distinguishes subscription OAuth from generic OAuth sign-in", async () => {
@@ -148,12 +148,12 @@ describe("ModelRuntime auth options", () => {
 			modelsPath: null,
 		});
 
-		expect(runtime.isUsingOAuth("anthropic")).toBe(true);
-		expect(runtime.isUsingSubscription("anthropic")).toBe(true);
+		expect(runtime.isUsingOAuth("minimax")).toBe(true);
+		expect(runtime.isUsingSubscription("minimax")).toBe(true);
 		expect(runtime.isUsingOAuth("openrouter")).toBe(true);
 		expect(runtime.isUsingSubscription("openrouter")).toBe(false);
-		expect(runtime.isUsingOAuth("radius")).toBe(true);
-		expect(runtime.isUsingSubscription("radius")).toBe(false);
+		expect(runtime.isUsingOAuth("deepseek")).toBe(true);
+		expect(runtime.isUsingSubscription("deepseek")).toBe(false);
 	});
 
 	it("constructs an API key method for an extension API-key provider", async () => {

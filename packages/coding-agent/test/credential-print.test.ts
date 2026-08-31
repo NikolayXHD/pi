@@ -19,7 +19,7 @@ async function createRuntime(credentials: AuthStorage): Promise<ModelRuntime> {
 describe("credential print commands", () => {
 	test("prints a resolved API key", async () => {
 		const runtime = await createRuntime(AuthStorage.inMemory({ openai: { type: "api_key", key: "test-api-key" } }));
-		const args = parseArgs(["--provider", "openai"]);
+		const args = parseArgs(["--provider", "deepseek"]);
 
 		await expect(resolveCredentialForPrint(args, runtime, "api_key")).resolves.toBe("test-api-key");
 	});
@@ -42,7 +42,7 @@ describe("credential print commands", () => {
 
 	test("refreshes an expired OAuth token before printing it", async () => {
 		const storage = AuthStorage.inMemory({
-			"openai-codex": {
+			deepseek: {
 				type: "oauth",
 				access: "old-test-token",
 				refresh: "test-refresh-token",
@@ -56,14 +56,14 @@ describe("credential print commands", () => {
 			refresh: "test-refresh-token",
 			expires: Date.now() + 60 * 60 * 1000,
 		}));
-		const oauth = runtime.getProvider("openai-codex")?.auth.oauth;
+		const oauth = runtime.getProvider("deepseek")?.auth.oauth;
 		if (!oauth) throw new Error("OpenAI Codex OAuth provider is not registered");
 		oauth.refresh = refresh;
-		const args = parseArgs(["--provider", "openai-codex"]);
+		const args = parseArgs(["--provider", "deepseek"]);
 
 		await expect(resolveCredentialForPrint(args, runtime, "bearer_token")).resolves.toBe("fresh-test-token");
 		expect(refresh).toHaveBeenCalledOnce();
-		expect(await storage.read("openai-codex")).toMatchObject({ access: "fresh-test-token" });
+		expect(await storage.read("deepseek")).toMatchObject({ access: "fresh-test-token" });
 	});
 
 	test("reports unknown auth options like package commands", async () => {
@@ -71,7 +71,7 @@ describe("credential print commands", () => {
 		const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 		try {
 			process.exitCode = undefined;
-			await main(["auth", "check", "--provider", "openai-codex", "--credentails"]);
+			await main(["auth", "check", "--provider", "deepseek", "--credentails"]);
 			const stderr = errorSpy.mock.calls.map(([message]) => String(message)).join("\n");
 			expect(stderr).toContain('Unknown option --credentails for "auth check".');
 			expect(stderr).toContain(
@@ -87,7 +87,7 @@ describe("credential print commands", () => {
 	test("parses credential commands and rejects invalid arguments or credential types", async () => {
 		const runtime = await createRuntime(
 			AuthStorage.inMemory({
-				"openai-codex": {
+				deepseek: {
 					type: "oauth",
 					access: "test-token-not-to-be-printed",
 					refresh: "test-refresh-token",
@@ -96,9 +96,9 @@ describe("credential print commands", () => {
 			}),
 		);
 
-		expect(parseAuthCommand(["auth", "print-api-key", "--provider", "openai"])).toEqual({
+		expect(parseAuthCommand(["auth", "print-api-key", "--provider", "deepseek"])).toEqual({
 			kind: "api_key",
-			args: ["--provider", "openai"],
+			args: ["--provider", "deepseek"],
 			json: false,
 			credentials: false,
 			noRefresh: false,
@@ -124,7 +124,7 @@ describe("credential print commands", () => {
 			"requires --provider <provider> or --model <model>",
 		);
 		await expect(
-			resolveCredentialForPrint(parseArgs(["--provider", "openai-codex"]), runtime, "api_key"),
+			resolveCredentialForPrint(parseArgs(["--provider", "deepseek"]), runtime, "api_key"),
 		).rejects.toThrow("configured with OAuth");
 	});
 });

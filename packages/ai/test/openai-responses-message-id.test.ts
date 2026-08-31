@@ -15,7 +15,7 @@ const usage: Usage = {
 
 describe("OpenAI Responses message ID conversion", () => {
 	it("generates unique fallback message IDs for multiple text blocks in one assistant turn", () => {
-		const model = getModel("openai-codex", "gpt-5.5");
+		const model = getModel("deepseek", "deepseek-v4-pro");
 		const assistant: AssistantMessage = {
 			role: "assistant",
 			content: [
@@ -23,8 +23,8 @@ describe("OpenAI Responses message ID conversion", () => {
 				{ type: "text", text: "visible answer" },
 			],
 			api: "anthropic-messages",
-			provider: "anthropic",
-			model: "claude-opus-4-8",
+			provider: "minimax",
+			model: "MiniMax-M2.7",
 			usage,
 			stopReason: "stop",
 			timestamp: Date.now() - 1000,
@@ -34,7 +34,7 @@ describe("OpenAI Responses message ID conversion", () => {
 			messages: [{ role: "user", content: "hello", timestamp: Date.now() - 2000 }, assistant],
 		};
 
-		const input = convertResponsesMessages(model, context, new Set(["openai", "openai-codex", "opencode"]));
+		const input = convertResponsesMessages(model, context, new Set(["deepseek", "deepseek", "deepseek"]));
 		const messageIds = input
 			.filter(
 				(item): item is ResponseOutputMessage =>

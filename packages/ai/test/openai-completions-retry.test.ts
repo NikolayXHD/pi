@@ -51,7 +51,7 @@ const model: Model<"openai-completions"> = {
 	id: "test-model",
 	name: "Test Model",
 	api: "openai-completions",
-	provider: "opencode-go",
+	provider: "deepseek",
 	baseUrl: "https://opencode.ai/zen/go/v1",
 	reasoning: false,
 	input: ["text"],

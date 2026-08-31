@@ -81,7 +81,7 @@ describe("openai-completions prompt caching", () => {
 	});
 
 	function createModel(overrides: Partial<Model<"openai-completions">> = {}): Model<"openai-completions"> {
-		const { compat: _compat, ...baseModel } = getModel("openai", "gpt-4o-mini");
+		const { compat: _compat, ...baseModel } = getModel("deepseek", "deepseek-v4-pro");
 		return {
 			...(baseModel as Omit<Model<"openai-completions">, "api">),
 			api: "openai-completions",
@@ -113,7 +113,10 @@ describe("openai-completions prompt caching", () => {
 	}
 
 	it("sets prompt_cache_key for direct OpenAI requests when caching is enabled", async () => {
-		const { payload } = await captureRequest({ sessionId: "session-123" });
+		const { payload } = await captureRequest(
+			{ sessionId: "session-123" },
+			createModel({ baseUrl: "https://api.openai.com/v1" }),
+		);
 
 		expect(payload?.prompt_cache_key).toBe("session-123");
 		expect(payload?.prompt_cache_retention).toBeUndefined();
@@ -128,7 +131,7 @@ describe("openai-completions prompt caching", () => {
 
 	it("clamps prompt_cache_key to OpenAI's 64-character limit", async () => {
 		const sessionId = "x".repeat(67);
-		const { payload } = await captureRequest({ sessionId });
+		const { payload } = await captureRequest({ sessionId }, createModel({ baseUrl: "https://api.openai.com/v1" }));
 
 		expect(payload?.prompt_cache_key).toBe("x".repeat(64));
 	});
@@ -171,18 +174,9 @@ describe("openai-completions prompt caching", () => {
 		expect(headers["x-session-affinity"]).toBe("session-affinity");
 	});
 
-	it.each(["accounts/fireworks/models/glm-5p2", "accounts/fireworks/routers/glm-5p2-fast"] as const)(
-		"sends Fireworks session affinity for %s",
-		async (modelId) => {
-			const model = getModel("fireworks", modelId);
-			const { headers } = await captureRequest({ sessionId: "fireworks-session" }, model);
-
-			expect(headers["x-session-affinity"]).toBe("fireworks-session");
-		},
-	);
-
 	it("uses OpenAI no-session format when configured", async () => {
 		const model = createModel({
+			baseUrl: "https://api.openai.com/v1",
 			compat: { sendSessionAffinityHeaders: true, sessionAffinityFormat: "openai-nosession" },
 		});
 		const { payload, headers } = await captureRequest({ sessionId: "session-nosession" }, model);

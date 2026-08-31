@@ -67,10 +67,10 @@ async function* createFunctionCallEvents(argumentsJson: string): AsyncIterable<R
 describe("openai responses partialJson cleanup", () => {
 	it("removes partialJson from persisted tool-call blocks at output_item.done", async () => {
 		const model: Model<"openai-responses"> = {
-			id: "gpt-5-mini",
+			id: "deepseek-v4-pro",
 			name: "GPT-5 Mini",
 			api: "openai-responses",
-			provider: "openai",
+			provider: "deepseek",
 			baseUrl: "https://api.openai.com/v1",
 			reasoning: true,
 			input: ["text"],

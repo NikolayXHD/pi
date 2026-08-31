@@ -80,6 +80,29 @@ interface KimiPayload {
 
 class PayloadCaptured extends Error {}
 
+function createModel<TApi extends Api>(api: TApi): Model<TApi> {
+	return {
+		id: "test-model",
+		name: "Test Model",
+		api,
+		provider: "test-provider",
+		baseUrl: "https://upstream.test/v1",
+		reasoning: false,
+		input: ["text"],
+		cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+		contextWindow: 10_000,
+		maxTokens: 1_000,
+	};
+}
+
+function anthropicDeferredModel(): Model<"anthropic-messages"> {
+	return { ...getModel("minimax", "MiniMax-M2.7")!, compat: { supportsToolReferences: true } };
+}
+
+function openAIResponsesDeferredModel(): Model<"openai-responses"> {
+	return { ...createModel("openai-responses"), compat: { supportsAdditionalTools: true, supportsToolSearch: true } };
+}
+
 function makeTool(name: string): Tool {
 	return {
 		name,
@@ -97,8 +120,8 @@ function makeAssistantToolCall(): AssistantMessage {
 		role: "assistant",
 		content: [{ type: "toolCall", id: "call_1", name: "base_tool", arguments: {} }],
 		api: "anthropic-messages",
-		provider: "anthropic",
-		model: "claude-opus-4-6",
+		provider: "minimax",
+		model: "MiniMax-M2.7",
 		usage: {
 			input: 0,
 			output: 0,
@@ -187,7 +210,7 @@ function makeCodexToken(): string {
 describe("deferred tools", () => {
 	it("loads an Anthropic tool at its tool-result marker", async () => {
 		const context = makeContext([makeTool("base_tool"), makeTool("late_tool")]);
-		const payload = await capturePayload<AnthropicPayload>(getModel("anthropic", "claude-opus-4-6"), context);
+		const payload = await capturePayload<AnthropicPayload>(anthropicDeferredModel(), context);
 
 		expect(payload.tools).toMatchObject([{ name: "base_tool" }, { name: "late_tool", defer_loading: true }]);
 		expect(findAnthropicToolResult(payload).content).toEqual([{ type: "tool_reference", tool_name: "late_tool" }]);
@@ -211,7 +234,10 @@ describe("deferred tools", () => {
 			content: [{ type: "text", text: "second result" }],
 		});
 
-		const payload = await capturePayload<AnthropicPayload>(getModel("anthropic", "claude-opus-4-6"), context);
+		const payload = await capturePayload<AnthropicPayload>(
+			{ ...anthropicDeferredModel(), input: ["text", "image"] as const },
+			context,
+		);
 
 		expect(findAnthropicToolResultContent(payload)).toMatchObject([
 			{
@@ -232,10 +258,10 @@ describe("deferred tools", () => {
 		const context = makeContext([makeTool("base_tool"), makeTool("late_tool")]);
 		const assistant = context.messages[1] as AssistantMessage;
 		assistant.api = "openai-responses";
-		assistant.provider = "openai";
-		assistant.model = "gpt-5.4";
+		assistant.provider = "deepseek";
+		assistant.model = "deepseek-v4-pro";
 
-		const payload = await capturePayload<AnthropicPayload>(getModel("anthropic", "claude-opus-4-8"), context);
+		const payload = await capturePayload<AnthropicPayload>(anthropicDeferredModel(), context);
 
 		expect(payload.tools).toMatchObject([{ name: "base_tool" }, { name: "late_tool", defer_loading: true }]);
 		expect(findAnthropicToolResult(payload).content).toEqual([{ type: "tool_reference", tool_name: "late_tool" }]);
@@ -243,7 +269,7 @@ describe("deferred tools", () => {
 
 	it("does not resurrect a marked tool missing from Context.tools", async () => {
 		const context = makeContext([makeTool("base_tool")]);
-		const payload = await capturePayload<AnthropicPayload>(getModel("anthropic", "claude-opus-4-6"), context);
+		const payload = await capturePayload<AnthropicPayload>(anthropicDeferredModel(), context);
 
 		expect(payload.tools?.map((tool) => tool.name)).toEqual(["base_tool"]);
 		const content = findAnthropicToolResult(payload).content;
@@ -254,7 +280,7 @@ describe("deferred tools", () => {
 		const context = makeContext([makeTool("base_tool"), makeTool("late_tool")]);
 		const assistant = context.messages[1] as AssistantMessage;
 		assistant.content = [{ type: "toolCall", id: "call_1", name: "late_tool", arguments: {} }];
-		const payload = await capturePayload<AnthropicPayload>(getModel("anthropic", "claude-opus-4-6"), context);
+		const payload = await capturePayload<AnthropicPayload>(anthropicDeferredModel(), context);
 
 		expect(payload.tools?.map((tool) => tool.name)).toEqual(["base_tool", "late_tool"]);
 		expect(payload.tools?.every((tool) => !tool.defer_loading)).toBe(true);
@@ -264,11 +290,7 @@ describe("deferred tools", () => {
 		const context = makeContext([makeTool("base_tool"), makeTool("read")], ["read"]);
 		const assistant = context.messages[1] as AssistantMessage;
 		assistant.content = [{ type: "toolCall", id: "call_1", name: "Read", arguments: {} }];
-		const payload = await capturePayload<AnthropicPayload>(
-			getModel("anthropic", "claude-opus-4-6"),
-			context,
-			"sk-ant-oat-fake",
-		);
+		const payload = await capturePayload<AnthropicPayload>(anthropicDeferredModel(), context, "sk-ant-oat-fake");
 
 		expect(payload.tools?.map((tool) => tool.name)).toEqual(["base_tool", "Read"]);
 		expect(payload.tools?.every((tool) => !tool.defer_loading)).toBe(true);
@@ -278,11 +300,7 @@ describe("deferred tools", () => {
 
 	it("matches OAuth-canonicalized markers to active tools", async () => {
 		const context = makeContext([makeTool("base_tool"), makeTool("read")], ["Read"]);
-		const payload = await capturePayload<AnthropicPayload>(
-			getModel("anthropic", "claude-opus-4-6"),
-			context,
-			"sk-ant-oat-fake",
-		);
+		const payload = await capturePayload<AnthropicPayload>(anthropicDeferredModel(), context, "sk-ant-oat-fake");
 
 		expect(payload.tools).toMatchObject([{ name: "base_tool" }, { name: "Read", defer_loading: true }]);
 		const content = findAnthropicToolResult(payload).content;
@@ -297,11 +315,7 @@ describe("deferred tools", () => {
 			messages: [makeUserMessage(1)],
 			tools: [makeTool("read"), { ...makeTool("Read"), description: "Canonical definition" }],
 		};
-		const payload = await capturePayload<AnthropicPayload>(
-			getModel("anthropic", "claude-opus-4-6"),
-			context,
-			"sk-ant-oat-fake",
-		);
+		const payload = await capturePayload<AnthropicPayload>(anthropicDeferredModel(), context, "sk-ant-oat-fake");
 
 		expect(payload.tools).toMatchObject([{ name: "Read", description: "Canonical definition" }]);
 	});
@@ -309,8 +323,8 @@ describe("deferred tools", () => {
 	it("uses the normal tool list when Anthropic tool references are unsupported", async () => {
 		const context = makeContext([makeTool("base_tool"), makeTool("late_tool")]);
 		const models: Model<"anthropic-messages">[] = [
-			getModel("anthropic", "claude-haiku-4-5"),
-			{ ...getModel("anthropic", "claude-opus-4-6"), id: "claude-sonnet-4-20250514" },
+			getModel("minimax", "MiniMax-M2.7"),
+			{ ...getModel("minimax", "MiniMax-M2.7"), id: "MiniMax-M2.7" },
 		];
 
 		for (const model of models) {
@@ -322,7 +336,7 @@ describe("deferred tools", () => {
 
 	it("keeps one immediate Anthropic tool when every current tool is marked", async () => {
 		const context = makeContext([makeTool("late_tool")]);
-		const payload = await capturePayload<AnthropicPayload>(getModel("anthropic", "claude-opus-4-6"), context);
+		const payload = await capturePayload<AnthropicPayload>(anthropicDeferredModel(), context);
 
 		expect(payload.tools).toMatchObject([{ name: "late_tool" }]);
 		expect(payload.tools?.[0]?.defer_loading).toBeUndefined();
@@ -332,7 +346,7 @@ describe("deferred tools", () => {
 
 	it("supports explicit Anthropic compatibility overrides", async () => {
 		const model: Model<"anthropic-messages"> = {
-			...getModel("anthropic", "claude-opus-4-6"),
+			...getModel("minimax", "MiniMax-M2.7"),
 			provider: "anthropic-proxy",
 			compat: { supportsToolReferences: true },
 		};
@@ -372,7 +386,7 @@ describe("deferred tools", () => {
 			requiresAssistantAfterToolResult: false,
 			requiresThinkingAsText: false,
 			requiresReasoningContentOnAssistantMessages: false,
-			thinkingFormat: "openai",
+			thinkingFormat: "deepseek",
 			openRouterRouting: {},
 			vercelGatewayRouting: {},
 			chatTemplateKwargs: {},
@@ -404,7 +418,7 @@ describe("deferred tools", () => {
 
 	it("loads an OpenAI Responses tool through additional_tools", async () => {
 		const context = makeContext([makeTool("base_tool"), makeTool("late_tool")]);
-		const payload = await capturePayload<OpenAIPayload>(getModel("openai", "gpt-5.4"), context);
+		const payload = await capturePayload<OpenAIPayload>(openAIResponsesDeferredModel(), context);
 		const additionalTools = payload.input?.find(
 			(item): item is OpenAIAdditionalTools => item.type === "additional_tools",
 		);
@@ -423,8 +437,8 @@ describe("deferred tools", () => {
 			...makeAssistantToolCall(),
 			content: [{ type: "toolCall", id: "call_late|fc_late", name: "late_tool", arguments: {} }],
 			api: "openai-responses",
-			provider: "openai",
-			model: "gpt-5.4",
+			provider: "deepseek",
+			model: "deepseek-v4-pro",
 		};
 		context.messages.splice(3, 0, lateCall, {
 			...makeToolResult(["late_tool"]),
@@ -432,7 +446,7 @@ describe("deferred tools", () => {
 			toolName: "late_tool",
 		});
 
-		const payload = await capturePayload<OpenAIPayload>(getModel("openai", "gpt-5.4"), context);
+		const payload = await capturePayload<OpenAIPayload>(openAIResponsesDeferredModel(), context);
 		const additionalToolIndexes = (payload.input ?? []).flatMap((item, index) =>
 			item.type === "additional_tools" ? [index] : [],
 		);
@@ -447,7 +461,7 @@ describe("deferred tools", () => {
 
 	it("falls back to client tool search when additional_tools is unsupported", async () => {
 		const model: Model<"openai-responses"> = {
-			...getModel("openai", "gpt-5.4"),
+			...createModel("openai-responses"),
 			provider: "openai-proxy",
 			compat: { supportsAdditionalTools: false, supportsToolSearch: true },
 		};
@@ -465,11 +479,11 @@ describe("deferred tools", () => {
 		expect(payload.input?.some((item) => item.type === "additional_tools")).toBe(false);
 	});
 
-	it.each(["gpt-5.2", "gpt-5.4-nano", "gpt-5.5-pro"] as const)(
+	it.each(["deepseek-v4-pro", "deepseek-v4-pro", "deepseek-v4-pro"] as const)(
 		"uses the normal tool list for unsupported OpenAI model %s",
-		async (modelId) => {
+		async (_modelId) => {
 			const context = makeContext([makeTool("base_tool"), makeTool("late_tool")]);
-			const payload = await capturePayload<OpenAIPayload>(getModel("openai", modelId), context);
+			const payload = await capturePayload<OpenAIPayload>(createModel("openai-responses"), context);
 
 			expect(openAIToolNames(payload)).toEqual(["base_tool", "late_tool"]);
 			expect(payload.input?.some((item) => item.type === "tool_search_output")).toBe(false);
@@ -478,7 +492,7 @@ describe("deferred tools", () => {
 
 	it("uses the normal tool list when OpenAI tool search is explicitly disabled", async () => {
 		const model: Model<"openai-responses"> = {
-			...getModel("openai", "gpt-5.4"),
+			...createModel("openai-responses"),
 			provider: "openai-proxy",
 			compat: { supportsToolSearch: false },
 		};
@@ -492,17 +506,17 @@ describe("deferred tools", () => {
 	it("selects additional tools, tool search, or top-level tools for Codex models", async () => {
 		const context = makeContext([makeTool("base_tool"), makeTool("late_tool")]);
 		const additionalTools = await capturePayload<OpenAIPayload>(
-			getModel("openai-codex", "gpt-5.6-sol"),
+			{ ...createModel("openai-codex-responses"), compat: { supportsAdditionalTools: true } },
 			context,
 			makeCodexToken(),
 		);
 		const toolSearch = await capturePayload<OpenAIPayload>(
-			getModel("openai-codex", "gpt-5.4"),
+			{ ...createModel("openai-codex-responses"), compat: { supportsToolSearch: true } },
 			context,
 			makeCodexToken(),
 		);
 		const topLevel = await capturePayload<OpenAIPayload>(
-			getModel("openai-codex", "gpt-5.3-codex-spark"),
+			createModel("openai-codex-responses"),
 			context,
 			makeCodexToken(),
 		);
@@ -519,7 +533,7 @@ describe("deferred tools", () => {
 
 	it("leaves providers without deferred loading unchanged", async () => {
 		const context = makeContext([makeTool("base_tool"), makeTool("late_tool")]);
-		const payload = await capturePayload<OpenAIPayload>(getModel("groq", "llama-3.3-70b-versatile"), context);
+		const payload = await capturePayload<OpenAIPayload>(getModel("deepseek", "deepseek-v4-flash"), context);
 		expect(openAIToolNames(payload)).toEqual(["base_tool", "late_tool"]);
 	});
 

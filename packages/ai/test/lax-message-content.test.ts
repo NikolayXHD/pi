@@ -17,7 +17,7 @@ function makeTextOnlyModel(): Model<"openai-completions"> {
 		id: "test-model",
 		name: "Test Model",
 		api: "openai-completions",
-		provider: "openai",
+		provider: "deepseek",
 		baseUrl: "https://example.invalid/v1",
 		reasoning: false,
 		input: ["text"],
@@ -35,7 +35,7 @@ describe("lax message content handling", () => {
 				role: "assistant",
 				content: null,
 				api: "openai-completions",
-				provider: "openai",
+				provider: "deepseek",
 				model: "test-model",
 				usage: {
 					input: 0,

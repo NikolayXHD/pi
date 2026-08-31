@@ -55,8 +55,8 @@ describe("serializeConversation", () => {
 			{
 				role: "assistant",
 				content: [{ type: "text", text: longText }],
-				api: "anthropic",
-				provider: "anthropic",
+				api: "minimax",
+				provider: "minimax",
 				model: "test",
 				usage: {
 					input: 0,
