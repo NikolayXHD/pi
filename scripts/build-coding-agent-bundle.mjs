@@ -182,7 +182,6 @@ const lazyResult = await build({
 		"bedrock-converse-stream": join(aiDistDir, "api", "bedrock-converse-stream.js"),
 		"image-resize-worker": join(codingAgentDistDir, "utils", "image-resize-worker.js"),
 		"kimi-coding": join(aiDistDir, "auth", "oauth", "kimi-coding.js"),
-		openrouter: join(aiDistDir, "auth", "oauth", "openrouter.js"),
 	},
 	outdir: dirname(bedrockLoaderOutput),
 	splitting: false,

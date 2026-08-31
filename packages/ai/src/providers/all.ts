@@ -10,8 +10,6 @@ import { minimaxProvider } from "./minimax.ts";
 import { minimaxCnProvider } from "./minimax-cn.ts";
 import { moonshotaiProvider } from "./moonshotai.ts";
 import { moonshotaiCnProvider } from "./moonshotai-cn.ts";
-import { openrouterProvider } from "./openrouter.ts";
-import { openrouterImagesProvider } from "./openrouter-images.ts";
 import { qwenTokenPlanProvider } from "./qwen-token-plan.ts";
 import { qwenTokenPlanCnProvider } from "./qwen-token-plan-cn.ts";
 import { qwenTokenPlanIndividualProvider } from "./qwen-token-plan-individual.ts";
@@ -22,9 +20,7 @@ import { xiaomiTokenPlanSgpProvider } from "./xiaomi-token-plan-sgp.ts";
 import { zaiProvider } from "./zai.ts";
 import { zaiCodingCnProvider } from "./zai-coding-cn.ts";
 
-/** Providers present in the generated catalog. `KnownProvider` additionally
- * includes purely dynamic providers (e.g. "radius") that have no static
- * catalog entry. */
+/** Providers present in the generated catalog. */
 export type BuiltinProvider = keyof typeof MODELS;
 
 type BuiltinModelApi<
@@ -70,7 +66,6 @@ export function builtinProviders(): Provider[] {
 		minimaxCnProvider(),
 		moonshotaiProvider(),
 		moonshotaiCnProvider(),
-		openrouterProvider(),
 		qwenTokenPlanProvider(),
 		qwenTokenPlanCnProvider(),
 		qwenTokenPlanIndividualProvider(),
@@ -94,7 +89,7 @@ export function builtinModels(options?: CreateModelsOptions): MutableModels {
 
 /** All built-in image-generation providers, freshly constructed. */
 export function builtinImagesProviders(): ImagesProvider[] {
-	return [openrouterImagesProvider()];
+	return [];
 }
 
 /** An `ImagesModels` collection with every built-in image-generation provider registered. */

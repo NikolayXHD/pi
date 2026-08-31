@@ -49,14 +49,14 @@ const mockModels: Model<"anthropic-messages">[] = [
 	},
 ];
 
-// Mock OpenRouter models with colons in IDs
-const mockOpenRouterModels: Model<"anthropic-messages">[] = [
+// Mock router-style model ids with colons
+const mockRouterModels: Model<"anthropic-messages">[] = [
 	{
 		id: "qwen/qwen3-coder:exacto",
 		name: "Qwen3 Coder Exacto",
 		api: "anthropic-messages",
-		provider: "openrouter",
-		baseUrl: "https://openrouter.ai/api/v1",
+		provider: "aggregator",
+		baseUrl: "https://aggregator.example.com/v1",
 		reasoning: true,
 		input: ["text"],
 		cost: { input: 1, output: 2, cacheRead: 0.1, cacheWrite: 1 },
@@ -67,8 +67,8 @@ const mockOpenRouterModels: Model<"anthropic-messages">[] = [
 		id: "openai/gpt-4o:extended",
 		name: "GPT-4o Extended",
 		api: "anthropic-messages",
-		provider: "openrouter",
-		baseUrl: "https://openrouter.ai/api/v1",
+		provider: "aggregator",
+		baseUrl: "https://aggregator.example.com/v1",
 		reasoning: false,
 		input: ["text", "image"],
 		cost: { input: 5, output: 15, cacheRead: 0.5, cacheWrite: 5 },
@@ -77,7 +77,7 @@ const mockOpenRouterModels: Model<"anthropic-messages">[] = [
 	},
 ];
 
-const allModels = [...mockModels, ...mockOpenRouterModels];
+const allModels = [...mockModels, ...mockRouterModels];
 
 describe("parseModelPattern", () => {
 	describe("simple patterns without colons", () => {
@@ -145,7 +145,7 @@ describe("parseModelPattern", () => {
 		});
 	});
 
-	describe("OpenRouter models with colons in IDs", () => {
+	describe("router-style model ids with colons", () => {
 		test("qwen3-coder:exacto matches the model with undefined thinking level", () => {
 			const result = parseModelPattern("qwen/qwen3-coder:exacto", allModels);
 			expect(result.model?.id).toBe("qwen/qwen3-coder:exacto");
@@ -153,10 +153,10 @@ describe("parseModelPattern", () => {
 			expect(result.warning).toBeUndefined();
 		});
 
-		test("openrouter/qwen/qwen3-coder:exacto matches with provider prefix", () => {
-			const result = parseModelPattern("openrouter/qwen/qwen3-coder:exacto", allModels);
+		test("aggregator/qwen/qwen3-coder:exacto matches with provider prefix", () => {
+			const result = parseModelPattern("aggregator/qwen/qwen3-coder:exacto", allModels);
 			expect(result.model?.id).toBe("qwen/qwen3-coder:exacto");
-			expect(result.model?.provider).toBe("openrouter");
+			expect(result.model?.provider).toBe("aggregator");
 			expect(result.thinkingLevel).toBeUndefined();
 			expect(result.warning).toBeUndefined();
 		});
@@ -168,10 +168,10 @@ describe("parseModelPattern", () => {
 			expect(result.warning).toBeUndefined();
 		});
 
-		test("openrouter/qwen/qwen3-coder:exacto:high matches with provider and thinking level", () => {
-			const result = parseModelPattern("openrouter/qwen/qwen3-coder:exacto:high", allModels);
+		test("aggregator/qwen/qwen3-coder:exacto:high matches with provider and thinking level", () => {
+			const result = parseModelPattern("aggregator/qwen/qwen3-coder:exacto:high", allModels);
 			expect(result.model?.id).toBe("qwen/qwen3-coder:exacto");
-			expect(result.model?.provider).toBe("openrouter");
+			expect(result.model?.provider).toBe("aggregator");
 			expect(result.thinkingLevel).toBe("high");
 			expect(result.warning).toBeUndefined();
 		});
@@ -184,7 +184,7 @@ describe("parseModelPattern", () => {
 		});
 	});
 
-	describe("invalid thinking levels with OpenRouter models", () => {
+	describe("invalid thinking levels with router-style model ids", () => {
 		test("qwen3-coder:exacto:random returns model with undefined thinking level and warning", () => {
 			const result = parseModelPattern("qwen/qwen3-coder:exacto:random", allModels);
 			expect(result.model?.id).toBe("qwen/qwen3-coder:exacto");
@@ -368,7 +368,7 @@ describe("resolveCliModel", () => {
 		expect(result.thinkingLevel).toBe("high");
 	});
 
-	test("prefers exact model id match over provider inference (OpenRouter-style ids)", () => {
+	test("prefers exact model id match over provider inference (router-style ids)", () => {
 		const registry = {
 			getModels: () => allModels,
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
@@ -379,7 +379,7 @@ describe("resolveCliModel", () => {
 		});
 
 		expect(result.error).toBeUndefined();
-		expect(result.model?.provider).toBe("openrouter");
+		expect(result.model?.provider).toBe("aggregator");
 		expect(result.model?.id).toBe("openai/gpt-4o:extended");
 	});
 
@@ -405,13 +405,13 @@ describe("resolveCliModel", () => {
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
-			cliProvider: "openrouter",
-			cliModel: "openrouter/openai/ghost-model",
+			cliProvider: "aggregator",
+			cliModel: "aggregator/openai/ghost-model",
 			modelRuntime: registry,
 		});
 
 		expect(result.error).toBeUndefined();
-		expect(result.model?.provider).toBe("openrouter");
+		expect(result.model?.provider).toBe("aggregator");
 		expect(result.model?.id).toBe("openai/ghost-model");
 	});
 
@@ -570,18 +570,18 @@ describe("resolveCliModel", () => {
 		expect(result.model?.id).toBe("xiaomi/mimo-v2.5-pro");
 	});
 
-	test("resolves provider-prefixed fuzzy patterns (openrouter/qwen -> openrouter model)", () => {
+	test("resolves provider-prefixed fuzzy patterns (aggregator/qwen -> aggregator model)", () => {
 		const registry = {
 			getModels: () => allModels,
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
-			cliModel: "openrouter/qwen",
+			cliModel: "aggregator/qwen",
 			modelRuntime: registry,
 		});
 
 		expect(result.error).toBeUndefined();
-		expect(result.model?.provider).toBe("openrouter");
+		expect(result.model?.provider).toBe("aggregator");
 		expect(result.model?.id).toBe("qwen/qwen3-coder:exacto");
 	});
 
@@ -741,14 +741,14 @@ describe("default model selection", () => {
 		} as unknown as Parameters<typeof findInitialModel>[0]["modelRuntime"];
 
 		const result = await findInitialModel({
-			cliProvider: "openrouter",
-			cliModel: "openrouter/openai/ghost-model",
+			cliProvider: "aggregator",
+			cliModel: "aggregator/openai/ghost-model",
 			scopedModels: [],
 			isContinuing: false,
 			modelRuntime: registry,
 		});
 
-		expect(result.model?.provider).toBe("openrouter");
+		expect(result.model?.provider).toBe("aggregator");
 		expect(result.model?.id).toBe("openai/ghost-model");
 	});
 

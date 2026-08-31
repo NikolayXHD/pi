@@ -12,7 +12,6 @@ const importOAuthModule = (specifier: string): Promise<unknown> => {
 };
 
 type OAuthFlowLoaders = {
-	openrouter: () => OAuthAuth | Promise<OAuthAuth>;
 	kimiCoding: () => OAuthAuth | Promise<OAuthAuth>;
 };
 
@@ -22,11 +21,6 @@ let bundledLoaders: OAuthFlowLoaders | undefined;
 export function registerBundledOAuthFlowLoaders(loaders: OAuthFlowLoaders): void {
 	bundledLoaders = loaders;
 }
-
-export const loadOpenRouterOAuth = async (): Promise<OAuthAuth> => {
-	if (bundledLoaders) return bundledLoaders.openrouter();
-	return ((await importOAuthModule("./openrouter.ts")) as { openRouterOAuth: OAuthAuth }).openRouterOAuth;
-};
 
 export const loadKimiCodingOAuth = async (): Promise<OAuthAuth> => {
 	if (bundledLoaders) return bundledLoaders.kimiCoding();

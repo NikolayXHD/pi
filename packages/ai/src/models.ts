@@ -865,7 +865,7 @@ export function createProvider<TApi extends Api = Api>(input: CreateProviderOpti
  * Runtime-checked narrowing for dynamically looked-up models:
  *
  * ```ts
- * const model = models.getModel("anthropic", "claude-opus-4-7");
+ * const model = models.getModel("minimax", "MiniMax-M2.7");
  * if (model && hasApi(model, "anthropic-messages")) {
  *   // model: Model<"anthropic-messages">, stream options fully typed
  * }

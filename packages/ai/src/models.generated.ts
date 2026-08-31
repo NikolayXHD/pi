@@ -8,7 +8,6 @@ import { MINIMAX_MODELS } from "./providers/minimax.models.ts";
 import { MINIMAX_CN_MODELS } from "./providers/minimax-cn.models.ts";
 import { MOONSHOTAI_MODELS } from "./providers/moonshotai.models.ts";
 import { MOONSHOTAI_CN_MODELS } from "./providers/moonshotai-cn.models.ts";
-import { OPENROUTER_MODELS } from "./providers/openrouter.models.ts";
 import { QWEN_TOKEN_PLAN_MODELS } from "./providers/qwen-token-plan.models.ts";
 import { QWEN_TOKEN_PLAN_CN_MODELS } from "./providers/qwen-token-plan-cn.models.ts";
 import { QWEN_TOKEN_PLAN_INDIVIDUAL_MODELS } from "./providers/qwen-token-plan-individual.models.ts";
@@ -27,7 +26,6 @@ export const MODELS: {
 	readonly "minimax-cn": typeof MINIMAX_CN_MODELS;
 	readonly "moonshotai": typeof MOONSHOTAI_MODELS;
 	readonly "moonshotai-cn": typeof MOONSHOTAI_CN_MODELS;
-	readonly "openrouter": typeof OPENROUTER_MODELS;
 	readonly "qwen-token-plan": typeof QWEN_TOKEN_PLAN_MODELS;
 	readonly "qwen-token-plan-cn": typeof QWEN_TOKEN_PLAN_CN_MODELS;
 	readonly "qwen-token-plan-individual": typeof QWEN_TOKEN_PLAN_INDIVIDUAL_MODELS;
@@ -45,7 +43,6 @@ export const MODELS: {
 	"minimax-cn": MINIMAX_CN_MODELS,
 	"moonshotai": MOONSHOTAI_MODELS,
 	"moonshotai-cn": MOONSHOTAI_CN_MODELS,
-	"openrouter": OPENROUTER_MODELS,
 	"qwen-token-plan": QWEN_TOKEN_PLAN_MODELS,
 	"qwen-token-plan-cn": QWEN_TOKEN_PLAN_CN_MODELS,
 	"qwen-token-plan-individual": QWEN_TOKEN_PLAN_INDIVIDUAL_MODELS,

@@ -27,8 +27,6 @@ import { Type } from "typebox";
 import { beforeAll, describe, expect, it } from "vitest";
 import { completeSimple, getEnvApiKey, getModel } from "../src/compat.ts";
 import type { Api, AssistantMessage, Message, Model, Tool, ToolResultMessage } from "../src/types.ts";
-import { hasAzureOpenAICredentials } from "./azure-utils.ts";
-import { hasCloudflareAiGatewayCredentials, hasCloudflareWorkersAICredentials } from "./cloudflare-utils.ts";
 import { resolveApiKey } from "./oauth.ts";
 
 // Simple tool for testing
@@ -48,85 +46,23 @@ interface ProviderModelPair {
 	model: string;
 	label: string;
 	apiOverride?: Api;
-	upstreamApiKeyEnv?: string;
 }
 
 const PROVIDER_MODEL_PAIRS: ProviderModelPair[] = [
-	// Anthropic
-	{ provider: "minimax", model: "MiniMax-M2.7", label: "anthropic-claude-sonnet-4-5" },
-	// Google
-	{ provider: "deepseek", model: "deepseek-v4-pro", label: "google-gemini-3-flash-preview" },
-	// OpenAI
-	{
-		provider: "deepseek",
-		model: "deepseek-v4-pro",
-		label: "openai-completions-gpt-4o-mini",
-		apiOverride: "openai-completions",
-	},
-	{ provider: "deepseek", model: "deepseek-v4-pro", label: "openai-responses-gpt-5-mini" },
-	{ provider: "deepseek", model: "deepseek-v4-pro", label: "azure-openai-responses-gpt-4o-mini" },
-	// OpenAI Codex
-	{ provider: "deepseek", model: "deepseek-v4-pro", label: "openai-codex-gpt-5.5" },
-	// GitHub Copilot
-	{ provider: "deepseek", model: "MiniMax-M2.7", label: "copilot-claude-sonnet-4.5" },
-	{ provider: "deepseek", model: "deepseek-v4-pro", label: "copilot-gpt-5.1-codex" },
-	{ provider: "deepseek", model: "deepseek-v4-pro", label: "copilot-gemini-3-flash-preview" },
-	{ provider: "deepseek", model: "grok-code-fast-1", label: "copilot-grok-code-fast-1" },
-	// Amazon Bedrock
-	{
-		provider: "deepseek",
-		model: "global.anthropic.claude-sonnet-4-5-20250929-v1:0",
-		label: "bedrock-claude-sonnet-4-5",
-	},
-	// xAI
-	{ provider: "deepseek", model: "grok-4.3", label: "xai-grok-4.3" },
-	// Cerebras
-	{ provider: "deepseek", model: "zai-glm-4.7", label: "cerebras-zai-glm-4.7" },
-	// Cloudflare Workers AI
-	{ provider: "deepseek", model: "@cf/moonshotai/kimi-k2.6", label: "cloudflare-kimi-k2.6" },
-	// Cloudflare AI Gateway
-	{
-		provider: "deepseek",
-		model: "workers-ai/@cf/moonshotai/kimi-k2.6",
-		label: "cloudflare-gateway-kimi-k2.6",
-	},
-	{
-		provider: "deepseek",
-		model: "MiniMax-M2.7",
-		label: "cloudflare-gateway-claude-sonnet-4-5",
-		upstreamApiKeyEnv: "ANTHROPIC_API_KEY",
-	},
-	{
-		provider: "deepseek",
-		model: "deepseek-v4-pro",
-		label: "cloudflare-gateway-gpt-5.1",
-		upstreamApiKeyEnv: "OPENAI_API_KEY",
-	},
-	// Groq
-	{ provider: "deepseek", model: "openai/gpt-oss-120b", label: "groq-gpt-oss-120b" },
-	// Hugging Face
-	{ provider: "deepseek", model: "moonshotai/Kimi-K2.5", label: "huggingface-kimi-k2.5" },
-	// Together AI
-	{ provider: "deepseek", model: "moonshotai/Kimi-K2.6", label: "together-kimi-k2.6" },
-	// Baseten
-	{ provider: "deepseek", model: "zai-org/GLM-5.2", label: "baseten-glm-5.2" },
+	// MiniMax (anthropic-messages)
+	{ provider: "minimax", model: "MiniMax-M2.7", label: "minimax-m2.7" },
+	{ provider: "minimax-cn", model: "MiniMax-M2.7", label: "minimax-cn-m2.7" },
 	// Kimi For Coding
 	{ provider: "kimi-coding", model: "kimi-for-coding", label: "kimi-for-coding" },
-	// Mistral
-	{ provider: "deepseek", model: "devstral-medium-latest", label: "mistral-devstral-medium" },
-	// MiniMax
-	{ provider: "minimax", model: "MiniMax-M2.7", label: "minimax-m2.7" },
-	{ provider: "minimax-cn", model: "MiniMax-M2.7", label: "minimax-m2.7" },
-	// OpenCode Zen
-	{ provider: "deepseek", model: "big-pickle", label: "zen-big-pickle" },
-	{ provider: "deepseek", model: "MiniMax-M2.7", label: "zen-claude-sonnet-4-5" },
-	{ provider: "deepseek", model: "deepseek-v4-pro", label: "zen-gemini-3-flash" },
-	{ provider: "deepseek", model: "glm-4.7-free", label: "zen-glm-4.7-free" },
-	{ provider: "deepseek", model: "deepseek-v4-pro", label: "zen-gpt-5.2-codex" },
-	{ provider: "deepseek", model: "minimax-m2.1-free", label: "zen-minimax-m2.1-free" },
-	// OpenCode Go
-	{ provider: "deepseek", model: "kimi-k2.5", label: "go-kimi-k2.5" },
-	{ provider: "deepseek", model: "minimax-m2.5", label: "go-minimax-m2.5" },
+	// DeepSeek (openai-completions)
+	{ provider: "deepseek", model: "deepseek-v4-pro", label: "deepseek-v4-pro" },
+	{ provider: "deepseek", model: "deepseek-v4-flash", label: "deepseek-v4-flash" },
+	// Z.AI
+	{ provider: "zai", model: "glm-5.2", label: "zai-glm-5.2" },
+	// Moonshot
+	{ provider: "moonshotai", model: "kimi-k2.6", label: "moonshotai-kimi-k2.6" },
+	// Ant Ling
+	{ provider: "ant-ling", model: "Ling-2.6-1T", label: "ant-ling-ling-2.6-1t" },
 	// Xiaomi MiMo
 	{ provider: "xiaomi", model: "mimo-v2.5-pro", label: "xiaomi-mimo-v2.5-pro" },
 	{ provider: "xiaomi-token-plan-cn", model: "mimo-v2.5-pro", label: "xiaomi-token-plan-cn-mimo-v2.5-pro" },
@@ -139,16 +75,6 @@ const PROVIDER_MODEL_PAIRS: ProviderModelPair[] = [
 		provider: "qwen-token-plan-individual",
 		model: "qwen3.8-max",
 		label: "qwen-token-plan-individual-qwen3.8-max",
-	},
-	{
-		provider: "qwen-token-plan-individual",
-		model: "deepseek-v4-flash-0731",
-		label: "qwen-token-plan-individual-deepseek-v4-flash-0731",
-	},
-	{
-		provider: "qwen-token-plan-individual",
-		model: "glm-5.2",
-		label: "qwen-token-plan-individual-glm-5.2",
 	},
 ];
 
@@ -175,23 +101,7 @@ async function getApiKey(provider: string): Promise<string | undefined> {
  * Synchronous check for API key availability (env vars only, for skipIf)
  */
 function hasApiKey(pair: ProviderModelPair): boolean {
-	if (pair.provider === "deepseek") {
-		return hasAzureOpenAICredentials();
-	}
-	if (pair.provider === "deepseek") {
-		return hasCloudflareWorkersAICredentials();
-	}
-	if (pair.provider === "deepseek") {
-		if (!hasCloudflareAiGatewayCredentials()) return false;
-		return pair.upstreamApiKeyEnv ? !!process.env[pair.upstreamApiKeyEnv] : true;
-	}
 	return !!getEnvApiKey(pair.provider);
-}
-
-function getHeaders(pair: ProviderModelPair): Record<string, string> | undefined {
-	if (!pair.upstreamApiKeyEnv) return undefined;
-	const upstreamApiKey = process.env[pair.upstreamApiKeyEnv];
-	return upstreamApiKey ? { Authorization: `Bearer ${upstreamApiKey}` } : undefined;
 }
 
 /**
@@ -236,7 +146,6 @@ async function generateContext(
 	};
 
 	const supportsReasoning = model.reasoning === true;
-	const headers = getHeaders(pair);
 	let lastPayload: unknown;
 	let assistantResponse: AssistantMessage;
 	try {
@@ -250,7 +159,6 @@ async function generateContext(
 			{
 				apiKey,
 				reasoning: supportsReasoning ? "high" : undefined,
-				headers,
 				onPayload: (payload) => {
 					lastPayload = payload;
 				},
@@ -312,7 +220,6 @@ async function generateContext(
 			{
 				apiKey,
 				reasoning: supportsReasoning ? "high" : undefined,
-				headers,
 				onPayload: (payload) => {
 					lastPayload = payload;
 				},
@@ -447,7 +354,6 @@ describe.skipIf(!hasAnyApiKey())("Cross-Provider Handoff", () => {
 					? { ...baseModel, api: targetPair.apiOverride }
 					: baseModel;
 				const supportsReasoning = model.reasoning === true;
-				const headers = getHeaders(targetPair);
 
 				console.log(
 					`[Target: ${targetPair.label}] Testing with ${otherMessages.length} messages from other providers...`,
@@ -465,7 +371,6 @@ describe.skipIf(!hasAnyApiKey())("Cross-Provider Handoff", () => {
 						{
 							apiKey,
 							reasoning: supportsReasoning ? "high" : undefined,
-							headers,
 							onPayload: (payload) => {
 								lastPayload = payload;
 							},

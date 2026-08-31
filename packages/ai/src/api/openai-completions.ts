@@ -1582,8 +1582,6 @@ function detectCompat(model: Model<"openai-completions">): ResolvedOpenAIComplet
 		provider === "together" || baseUrl.includes("api.together.ai") || baseUrl.includes("api.together.xyz");
 	const isMoonshot = provider === "moonshotai" || provider === "moonshotai-cn" || baseUrl.includes("api.moonshot.");
 	const isOpenRouter = provider === "openrouter" || baseUrl.includes("openrouter.ai");
-	const isCloudflareWorkersAI = provider === "cloudflare-workers-ai" || baseUrl.includes("api.cloudflare.com");
-	const isCloudflareAiGateway = provider === "cloudflare-ai-gateway" || baseUrl.includes("gateway.ai.cloudflare.com");
 	const isNvidia = provider === "nvidia" || baseUrl.includes("integrate.api.nvidia.com");
 	const isAntLing = provider === "ant-ling" || baseUrl.includes("api.ant-ling.com");
 	const isDeepSeek = provider === "deepseek" || baseUrl.toLowerCase().includes("deepseek.com");
@@ -1601,19 +1599,10 @@ function detectCompat(model: Model<"openai-completions">): ResolvedOpenAIComplet
 		isMoonshot ||
 		provider === "opencode" ||
 		baseUrl.includes("opencode.ai") ||
-		isCloudflareWorkersAI ||
-		isCloudflareAiGateway ||
 		isAntLing;
 
 	const useMaxTokens =
-		baseUrl.includes("chutes.ai") ||
-		isDeepSeek ||
-		isMoonshot ||
-		isCloudflareAiGateway ||
-		isTogether ||
-		isNvidia ||
-		isAntLing ||
-		isZai;
+		baseUrl.includes("chutes.ai") || isDeepSeek || isMoonshot || isTogether || isNvidia || isAntLing || isZai;
 
 	const isGrok = provider === "xai" || baseUrl.includes("api.x.ai");
 	const isOpenRouterDeveloperRoleModel =
@@ -1623,8 +1612,7 @@ function detectCompat(model: Model<"openai-completions">): ResolvedOpenAIComplet
 	return {
 		supportsStore: !isNonStandard,
 		supportsDeveloperRole: isOpenRouterDeveloperRoleModel || (!isNonStandard && !isOpenRouter),
-		supportsReasoningEffort:
-			!isGrok && !isZai && !isMoonshot && !isTogether && !isCloudflareAiGateway && !isNvidia && !isAntLing,
+		supportsReasoningEffort: !isGrok && !isZai && !isMoonshot && !isTogether && !isNvidia && !isAntLing,
 		supportsUsageInStreaming: true,
 		supportsFinishReason: true,
 		maxTokensField: useMaxTokens ? "max_tokens" : "max_completion_tokens",
@@ -1650,19 +1638,13 @@ function detectCompat(model: Model<"openai-completions">): ResolvedOpenAIComplet
 		zaiToolStream: false,
 		supportsThinkingTokenBudget: false,
 		thinkingTokenBudgetField: undefined,
-		supportsStrictMode: !isMoonshot && !isTogether && !isCloudflareAiGateway && !isNvidia,
+		supportsStrictMode: !isMoonshot && !isTogether && !isNvidia,
 		supportsOpenAIGrammarTools: false,
 		cacheControlFormat,
 		sendSessionAffinityHeaders: false,
 		deferredToolsMode: undefined,
 		sessionAffinityFormat: isOpenRouter ? "openrouter" : "openai",
-		supportsLongCacheRetention: !(
-			isTogether ||
-			isCloudflareWorkersAI ||
-			isCloudflareAiGateway ||
-			isNvidia ||
-			isAntLing
-		),
+		supportsLongCacheRetention: !(isTogether || isNvidia || isAntLing),
 	};
 }
 

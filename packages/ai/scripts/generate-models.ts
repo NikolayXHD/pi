@@ -4,10 +4,6 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSy
 import { dirname, join, resolve } from "path";
 import { fileURLToPath } from "url";
 import { getEffortThinkingLevelMap, type ModelsDevReasoningOption } from "./models-dev-reasoning-options.ts";
-import {
-	getOpenRouterThinkingLevelMap,
-	type OpenRouterReasoningMetadata,
-} from "./openrouter-reasoning-options.ts";
 import type {
 	AnthropicMessagesCompat,
 	Api,
@@ -124,26 +120,6 @@ type ModelsDevCatalog = Record<string, ModelsDevProvider>;
 interface NvidiaNimModelListItem {
 	id: string;
 }
-
-interface OpenRouterModelListItem {
-	id: string;
-	name: string;
-	supported_parameters?: string[];
-	architecture?: { modality?: string };
-	pricing?: {
-		prompt?: string;
-		completion?: string;
-		input_cache_read?: string;
-		input_cache_write?: string;
-	};
-	top_provider?: {
-		context_length?: number;
-		max_completion_tokens?: number;
-	};
-	context_length?: number;
-	reasoning?: OpenRouterReasoningMetadata;
-}
-
 
 const COPILOT_STATIC_HEADERS = {
 	"User-Agent": "GitHubCopilotChat/0.35.0",
@@ -297,8 +273,6 @@ const KIMI_CODING_IMPLIED_COSTS: Record<string, Model<Api>["cost"]> = {
 	"kimi-for-coding-highspeed": { input: 1.9, output: 8, cacheRead: 0.38, cacheWrite: 0 },
 	"kimi-k2-thinking": { input: 0.6, output: 2.5, cacheRead: 0.15, cacheWrite: 0 },
 };
-const OPENROUTER_KIMI_K3_MODEL_IDS = new Set(["moonshotai/kimi-k3", "~moonshotai/kimi-latest"]);
-
 const ANT_LING_RING_THINKING_LEVEL_MAP = {
 	off: null,
 	minimal: null,
@@ -585,8 +559,6 @@ function detectOpenAICompletionsCompat(model: Model<"openai-completions">): Open
 		baseUrl.includes("api.z.ai") ||
 		baseUrl.includes("open.bigmodel.cn");
 	const isMoonshot = provider === "moonshotai" || provider === "moonshotai-cn" || baseUrl.includes("api.moonshot.");
-	const isOpenRouter = provider === "openrouter" || baseUrl.includes("openrouter.ai");
-	const isNvidia = provider === "nvidia" || baseUrl.includes("integrate.api.nvidia.com");
 	const isAntLing = provider === "ant-ling" || baseUrl.includes("api.ant-ling.com");
 	const isDeepSeek = provider === "deepseek" || baseUrl.toLowerCase().includes("deepseek.com");
 
@@ -603,14 +575,9 @@ function detectOpenAICompletionsCompat(model: Model<"openai-completions">): Open
 		isAntLing ||
 		isZai;
 
-	const isOpenRouterDeveloperRoleModel =
-		isOpenRouter && (model.id.startsWith("anthropic/") || model.id.startsWith("openai/"));
-	const cacheControlFormat =
-		provider === "openrouter" && /^~?anthropic\//.test(model.id) ? "anthropic" : undefined;
-
 	return {
 		supportsStore: !isNonStandard,
-		supportsDeveloperRole: isOpenRouterDeveloperRoleModel || (!isNonStandard && !isOpenRouter),
+		supportsDeveloperRole: !isNonStandard,
 		supportsReasoningEffort: !isZai && !isMoonshot && !isAntLing,
 		supportsUsageInStreaming: true,
 		supportsFinishReason: true,
@@ -633,7 +600,6 @@ function detectOpenAICompletionsCompat(model: Model<"openai-completions">): Open
 		zaiToolStream: false,
 		supportsStrictMode: !isMoonshot,
 		supportsOpenAIGrammarTools: false,
-		...(cacheControlFormat ? { cacheControlFormat } : {}),
 		sendSessionAffinityHeaders: false,
 		supportsLongCacheRetention: !isAntLing,
 	};
@@ -816,12 +782,10 @@ function applyThinkingLevelMetadata(model: Model<any>): void {
 	if (model.api === "openai-completions" && model.id.includes("deepseek-v4")) {
 		mergeThinkingLevelMap(
 			model,
-			model.provider === "openrouter"
-				? { ...DEEPSEEK_V4_THINKING_LEVEL_MAP, xhigh: "xhigh", max: null }
-				: (model.provider === "deepseek" || model.provider === "opencode" || model.provider === "opencode-go") &&
-					model.id.includes("deepseek-v4-flash")
-					? DEEPSEEK_V4_FLASH_THINKING_LEVEL_MAP
-					: DEEPSEEK_V4_THINKING_LEVEL_MAP,
+			(model.provider === "deepseek" || model.provider === "opencode" || model.provider === "opencode-go") &&
+			model.id.includes("deepseek-v4-flash")
+				? DEEPSEEK_V4_FLASH_THINKING_LEVEL_MAP
+				: DEEPSEEK_V4_THINKING_LEVEL_MAP,
 		);
 	}
 	if (isGoogleThinkingApi(model) && isGemini3ProModel(model.id)) {
@@ -847,16 +811,6 @@ function applyThinkingLevelMetadata(model: Model<any>): void {
 		// `thinking: { type: "disabled" }` is rejected, and callers can omit
 		// the thinking parameter to use the enabled default.
 		mergeThinkingLevelMap(model, { off: null });
-	}
-	if (model.provider === "openrouter" && model.id.startsWith("inception/mercury-2")) {
-		// Mercury 2 in instant mode (reasoning_effort: "none") disables tool calling.
-		// Mark "off" unsupported so the openai-completions provider omits the reasoning param
-		// instead of defaulting to {reasoning:{effort:"none"}} (see openai-completions.ts:575).
-		// Pi's low/medium/high pass through verbatim; OpenRouter normalizes to Mercury's vocabulary.
-		mergeThinkingLevelMap(model, { off: null });
-	}
-	if (model.provider === "openrouter" && model.id === "z-ai/glm-5.2") {
-		mergeThinkingLevelMap(model, { xhigh: "xhigh" });
 	}
 	if (model.provider === "fireworks" && model.id.includes("glm-5p2")) {
 		mergeThinkingLevelMap(model, { off: "none", minimal: null, low: "high", medium: "high", max: "max" });
@@ -928,71 +882,6 @@ function getModelsDevCost(cost: ModelsDevModel["cost"]): ModelCost {
 		cacheWrite: cost?.cache_write || 0,
 		...(tiers && tiers.length > 0 ? { tiers } : {}),
 	};
-}
-
-
-async function fetchOpenRouterModels(): Promise<Model<any>[]> {
-	try {
-		console.log("Fetching models from OpenRouter API...");
-		const response = await fetch("https://openrouter.ai/api/v1/models");
-		if (!response.ok) throw new Error(`OpenRouter API returned ${response.status}`);
-		const data = (await response.json()) as { data?: OpenRouterModelListItem[] };
-
-		const models: Model<any>[] = [];
-
-		for (const model of data.data ?? []) {
-			// Only include models that support tools
-			if (!model.supported_parameters?.includes("tools")) continue;
-
-			// Parse provider from model ID
-			let provider: KnownProvider = "openrouter";
-			let modelKey = model.id;
-
-			modelKey = model.id; // Keep full ID for OpenRouter
-
-			// Parse input modalities
-			const input: ("text" | "image")[] = ["text"];
-			if (model.architecture?.modality?.includes("image")) {
-				input.push("image");
-			}
-
-			// Convert pricing from $/token to $/million tokens
-			const inputCost = roundCost(parseFloat(model.pricing?.prompt || "0") * 1_000_000);
-			const outputCost = roundCost(parseFloat(model.pricing?.completion || "0") * 1_000_000);
-			const cacheReadCost = roundCost(parseFloat(model.pricing?.input_cache_read || "0") * 1_000_000);
-			const cacheWriteCost = roundCost(parseFloat(model.pricing?.input_cache_write || "0") * 1_000_000);
-
-			const contextWindow = model.top_provider?.context_length || model.context_length || 4096;
-			const thinkingLevelMap = getOpenRouterThinkingLevelMap(model.reasoning);
-
-			const normalizedModel: Model<any> = {
-				id: modelKey,
-				name: model.name,
-				api: "openai-completions",
-				baseUrl: "https://openrouter.ai/api/v1",
-				provider,
-				reasoning: model.supported_parameters?.includes("reasoning") || false,
-				...(thinkingLevelMap && { thinkingLevelMap }),
-				input,
-				cost: {
-					input: inputCost,
-					output: outputCost,
-					cacheRead: cacheReadCost,
-					cacheWrite: cacheWriteCost,
-				},
-				contextWindow,
-				maxTokens: model.top_provider?.max_completion_tokens || 4096,
-			};
-			models.push(normalizedModel);
-		}
-
-		console.log(`Fetched ${models.length} tool-capable models from OpenRouter`);
-		return models;
-	} catch (error) {
-		console.error("Failed to fetch OpenRouter models:", error);
-		if (generatorOptions.strict) throw error;
-		return [];
-	}
 }
 
 
@@ -2037,15 +1926,10 @@ async function loadModelsDevData(): Promise<Model<any>[]> {
 }
 
 async function generateModels() {
-	// Fetch models from both sources
-	// models.dev: Anthropic, Google, OpenAI, Groq, Cerebras
-	// OpenRouter: xAI and other providers (excluding Anthropic, Google, OpenAI)
-	// AI Gateway: OpenAI-compatible catalog with tool-capable models
+	// Fetch models from models.dev (the sole catalog source for the distribution).
 	const modelsDevModels = await loadModelsDevData();
-	const openRouterModels = await fetchOpenRouterModels();
 
-	// Combine models (models.dev has priority)
-	const allModels = [...modelsDevModels, ...openRouterModels].filter(
+	const allModels = modelsDevModels.filter(
 		(model) =>
 			!(model.provider === "xai" && XAI_BUILTIN_EXCLUDED_MODEL_IDS.has(model.id)) &&
 			!((model.provider === "opencode" || model.provider === "opencode-go") && model.id === "gpt-5.3-codex-spark"),
@@ -2096,30 +1980,8 @@ async function generateModels() {
 			candidate.maxTokens = 128000;
 		}
 		// Keep Kimi K3's canonical output limit when gateway metadata is missing or incorrect.
-		if (
-			(candidate.provider === "openrouter" && OPENROUTER_KIMI_K3_MODEL_IDS.has(candidate.id)) ||
-			(candidate.provider === "vercel-ai-gateway" && candidate.id === "moonshotai/kimi-k3")
-		) {
+		if (candidate.provider === "vercel-ai-gateway" && candidate.id === "moonshotai/kimi-k3") {
 			candidate.maxTokens = KIMI_K3_MAX_TOKENS;
-		}
-		// Keep selected OpenRouter model metadata stable until upstream settles.
-		if (candidate.provider === "openrouter" && candidate.id === "moonshotai/kimi-k2.5") {
-			candidate.cost.input = 0.41;
-			candidate.cost.output = 2.06;
-			candidate.cost.cacheRead = 0.07;
-			candidate.maxTokens = 4096;
-		}
-		if (candidate.provider === "openrouter" && candidate.id.startsWith("moonshotai/kimi-k2.6")) {
-			candidate.compat = {
-				...candidate.compat,
-				supportsDeveloperRole: false,
-				requiresReasoningContentOnAssistantMessages: true,
-			};
-		}
-		if (candidate.provider === "openrouter" && candidate.id === "z-ai/glm-5") {
-			candidate.cost.input = 0.6;
-			candidate.cost.output = 1.9;
-			candidate.cost.cacheRead = 0.119;
 		}
 	}
 
@@ -2303,7 +2165,7 @@ async function generateModels() {
 			candidate.id.includes("deepseek-v4") &&
 			!QWEN_TOKEN_PLAN_PROVIDER_IDS.has(candidate.provider)
 		) {
-			const preservesNativeReasoningEffort = candidate.provider === "openrouter" || candidate.provider === "opencode";
+			const preservesNativeReasoningEffort = candidate.provider === "opencode";
 			candidate.compat = {
 				...candidate.compat,
 				...(preservesNativeReasoningEffort
@@ -2445,54 +2307,7 @@ async function generateModels() {
 		});
 	}
 
-	// Add "auto" alias for openrouter/auto
-	if (!allModels.some(m => m.provider === "openrouter" && m.id === "auto")) {
-		allModels.push({
-			id: "auto",
-			name: "Auto",
-			api: "openai-completions",
-			provider: "openrouter",
-			baseUrl: "https://openrouter.ai/api/v1",
-			reasoning: true,
-			input: ["text", "image"],
-			cost: {
-				// we dont know about the costs because OpenRouter auto routes to different models
-				// and then charges you for the underlying used model
-				input:0,
-				output:0,
-				cacheRead:0,
-				cacheWrite:0,
-			},
-			contextWindow: 2000000,
-			maxTokens: 30000,
-		});
-	}
 
-	// Add "fusion" alias for openrouter/fusion. OpenRouter exposes Fusion as a
-	// router alias/plugin entry point; its model metadata does not advertise
-	// tools, but the alias resolves to a concrete model that can invoke caller
-	// tools and has the openrouter:fusion server tool auto-injected.
-	if (!allModels.some(m => m.provider === "openrouter" && m.id === "openrouter/fusion")) {
-		allModels.push({
-			id: "openrouter/fusion",
-			name: "OpenRouter: Fusion",
-			api: "openai-completions",
-			provider: "openrouter",
-			baseUrl: "https://openrouter.ai/api/v1",
-			reasoning: true,
-			input: ["text"],
-			cost: {
-				// we dont know about the costs because Fusion routes to multiple models
-				// and then charges you for the underlying used models
-				input: 0,
-				output: 0,
-				cacheRead: 0,
-				cacheWrite: 0,
-			},
-			contextWindow: 1000000,
-			maxTokens: 30000,
-		});
-	}
 
 
 	for (const model of allModels) {
@@ -2512,7 +2327,6 @@ async function generateModels() {
 			providers[model.provider] = {};
 		}
 		// Use model ID as key to automatically deduplicate
-		// Only add if not already present (models.dev takes priority over OpenRouter)
 		if (!providers[model.provider][model.id]) {
 			providers[model.provider][model.id] = model;
 		}
@@ -2525,7 +2339,7 @@ async function generateModels() {
 	// Добавление провайдера: дописать сюда и в builtinProviders() в all.ts.
 	const DISTRIBUTION_PROVIDER_IDS = new Set([
 		"ant-ling", "deepseek", "kimi-coding", "minimax", "minimax-cn",
-		"moonshotai", "moonshotai-cn", "openrouter", "qwen-token-plan",
+		"moonshotai", "moonshotai-cn", "qwen-token-plan",
 		"qwen-token-plan-cn", "qwen-token-plan-individual", "xiaomi",
 		"xiaomi-token-plan-ams", "xiaomi-token-plan-cn", "xiaomi-token-plan-sgp",
 		"zai", "zai-coding-cn",

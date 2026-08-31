@@ -1,11 +1,37 @@
 import { describe, expect, it } from "vitest";
 import { getModel, getSupportedThinkingLevels } from "../src/compat.ts";
+import type { Model } from "../src/types.ts";
+
+function openRouterModel(
+	id: string,
+	thinkingLevelMap: Model<"openai-completions">["thinkingLevelMap"],
+): Model<"openai-completions"> {
+	return {
+		id,
+		name: id,
+		api: "openai-completions",
+		provider: "openrouter",
+		baseUrl: "https://openrouter.ai/api/v1",
+		reasoning: true,
+		input: ["text"],
+		cost: { input: 3, output: 15, cacheRead: 0.3, cacheWrite: 3.75 },
+		contextWindow: 200000,
+		maxTokens: 8192,
+		thinkingLevelMap,
+	};
+}
 
 describe("getSupportedThinkingLevels", () => {
 	it("includes only medium/high/xhigh for OpenRouter GPT-5.5 Pro", () => {
-		const model = getModel("openrouter", "openai/gpt-5.5-pro");
-		expect(model).toBeDefined();
-		expect(getSupportedThinkingLevels(model!)).toEqual(["medium", "high", "xhigh"]);
+		const model = openRouterModel("openai/gpt-5.5-pro", {
+			off: null,
+			minimal: null,
+			low: null,
+			medium: "medium",
+			high: "high",
+			xhigh: "xhigh",
+		});
+		expect(getSupportedThinkingLevels(model)).toEqual(["medium", "high", "xhigh"]);
 	});
 
 	it("includes low/high/max plus off for DeepSeek V4 Flash on the DeepSeek provider", () => {
@@ -36,15 +62,27 @@ describe("getSupportedThinkingLevels", () => {
 	});
 
 	it("includes only high/xhigh plus off for DeepSeek V4 Flash on OpenRouter", () => {
-		const model = getModel("openrouter", "deepseek/deepseek-v4-flash");
-		expect(model).toBeDefined();
-		expect(getSupportedThinkingLevels(model!)).toEqual(["off", "high", "xhigh"]);
+		const model = openRouterModel("deepseek/deepseek-v4-flash", {
+			off: "off",
+			minimal: null,
+			low: null,
+			medium: null,
+			high: "high",
+			xhigh: "xhigh",
+		});
+		expect(getSupportedThinkingLevels(model)).toEqual(["off", "high", "xhigh"]);
 	});
 
 	it("includes max but not xhigh for OpenRouter Opus 4.6 (openai-completions API)", () => {
-		const model = getModel("openrouter", "anthropic/claude-opus-4.6");
-		expect(model).toBeDefined();
-		expect(getSupportedThinkingLevels(model!)).toContain("max");
-		expect(getSupportedThinkingLevels(model!)).not.toContain("xhigh");
+		const model = openRouterModel("anthropic/claude-opus-4.6", {
+			off: null,
+			minimal: null,
+			low: null,
+			medium: null,
+			high: null,
+			max: "max",
+		});
+		expect(getSupportedThinkingLevels(model)).toContain("max");
+		expect(getSupportedThinkingLevels(model)).not.toContain("xhigh");
 	});
 });

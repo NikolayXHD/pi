@@ -18,39 +18,15 @@ import type { ModelRuntime } from "./model-runtime.ts";
 
 /** Default model IDs for each known provider */
 export const defaultModelPerProvider: Record<KnownProvider, string> = {
-	"amazon-bedrock": "us.anthropic.claude-opus-4-6-v1",
 	"ant-ling": "Ring-2.6-1T",
-	anthropic: "claude-opus-4-8",
-	openai: "gpt-5.5",
-	"azure-openai-responses": "gpt-5.4",
-	"openai-codex": "gpt-5.5",
-	radius: "auto",
-	nvidia: "nvidia/nemotron-3-super-120b-a12b",
 	deepseek: "deepseek-v4-pro",
-	google: "gemini-3.1-pro-preview",
-	"google-vertex": "gemini-3.1-pro-preview",
-	"github-copilot": "gpt-5.4",
-	openrouter: "moonshotai/kimi-k2.6",
-	"vercel-ai-gateway": "zai/glm-5.1",
-	xai: "grok-4.6",
-	groq: "openai/gpt-oss-120b",
-	cerebras: "gpt-oss-120b",
 	zai: "glm-5.3",
 	"zai-coding-cn": "glm-5.3",
-	mistral: "devstral-medium-latest",
 	minimax: "MiniMax-M2.7",
 	"minimax-cn": "MiniMax-M2.7",
 	moonshotai: "kimi-k2.6",
 	"moonshotai-cn": "kimi-k2.6",
-	huggingface: "moonshotai/Kimi-K2.6",
-	fireworks: "accounts/fireworks/models/kimi-k2p6",
-	together: "moonshotai/Kimi-K2.6",
-	baseten: "zai-org/GLM-5.2",
-	opencode: "kimi-k2.6",
-	"opencode-go": "kimi-k2.6",
 	"kimi-coding": "kimi-for-coding",
-	"cloudflare-workers-ai": "@cf/moonshotai/kimi-k2.6",
-	"cloudflare-ai-gateway": "workers-ai/@cf/moonshotai/kimi-k2.6",
 	"qwen-token-plan": "qwen3.7-max",
 	"qwen-token-plan-cn": "qwen3.7-max",
 	"qwen-token-plan-individual": "qwen3.8-max",
@@ -543,7 +519,7 @@ export function resolveCliModel(options: {
 	// If we inferred a provider from the slash but found no match within that provider,
 	// fall back to matching the full input as a raw model id across all models.
 	// This handles OpenRouter-style IDs like "openai/gpt-4o:extended" where "openai"
-	// looks like a provider but the full string is actually a model id on openrouter.
+	// looks like a provider but the full string is actually a router-style model id.
 	if (inferredProvider) {
 		const lower = cliModel.toLowerCase();
 		const exact = availableModels.find(

@@ -1,8 +1,22 @@
 import { Type } from "typebox";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { stream as streamOpenAICompletions } from "../src/api/openai-completions.ts";
-import { getModel } from "../src/compat.ts";
 import type { Message, Model } from "../src/types.ts";
+
+function openRouterModel(id: string): Model<"openai-completions"> {
+	return {
+		id,
+		name: id,
+		api: "openai-completions",
+		provider: "openrouter",
+		baseUrl: "https://openrouter.ai/api/v1",
+		reasoning: true,
+		input: ["text"],
+		cost: { input: 3, output: 15, cacheRead: 0.3, cacheWrite: 3.75 },
+		contextWindow: 200000,
+		maxTokens: 8192,
+	};
+}
 
 interface CacheControl {
 	type: "ephemeral";
@@ -154,13 +168,13 @@ describe("openai-completions cacheControlFormat", () => {
 	});
 
 	it("preserves Anthropic-style cache markers for OpenRouter Anthropic models", async () => {
-		const model = getModel("openrouter", "anthropic/claude-sonnet-4");
+		const model = openRouterModel("anthropic/claude-sonnet-4");
 		const params = await capturePayload(model);
 		expectAnthropicCacheMarkers(params);
 	});
 
 	it("moves the conversation cache marker to a tool result", async () => {
-		const model = getModel("openrouter", "anthropic/claude-sonnet-4");
+		const model = openRouterModel("anthropic/claude-sonnet-4");
 		const timestamp = Date.now();
 		const params = await capturePayload(model, undefined, [
 			{ role: "user", content: "Read the file", timestamp },
