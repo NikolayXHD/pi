@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { Text, type TUI } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
@@ -454,6 +455,11 @@ describe("ToolExecutionComponent parity", () => {
 		expect(expanded).toContain("hidden content");
 	});
 
+	const outsideAgentsPath = resolve(process.cwd(), "..", "AGENTS.md");
+	const outsideAgentsDisplay = outsideAgentsPath.startsWith(homedir())
+		? `~${outsideAgentsPath.slice(homedir().length)}`
+		: outsideAgentsPath;
+
 	for (const scenario of [
 		{
 			title: "SKILL.md",
@@ -481,9 +487,9 @@ describe("ToolExecutionComponent parity", () => {
 		},
 		{
 			title: "outside AGENTS.md",
-			path: resolve(process.cwd(), "..", "AGENTS.md"),
+			path: outsideAgentsPath,
 			content: "Hidden outside resource instructions",
-			compact: `read resource ${resolve(process.cwd(), "..", "AGENTS.md").replace(/\\/g, "/")}`,
+			compact: `read resource ${outsideAgentsDisplay}`,
 			hidden: "Hidden outside resource instructions",
 			absent: undefined,
 		},

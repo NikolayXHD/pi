@@ -10,11 +10,10 @@ import { keyHint, keyText } from "../../modes/interactive/components/keybinding-
 import { getLanguageFromPath, highlightCode, type Theme } from "../../modes/interactive/theme/theme.ts";
 import { processImage } from "../../utils/image-process.ts";
 import { detectSupportedImageMimeTypeFromFile } from "../../utils/mime.ts";
-import { formatPathRelativeToCwdOrAbsolute } from "../../utils/paths.ts";
 import { getExperimentalToolSampling } from "../experimental.ts";
 import type { ToolDefinition, ToolRenderResultOptions } from "../extensions/types.ts";
 import { resolveReadPathAsync, resolveToCwd } from "./path-utils.ts";
-import { getTextOutput, renderToolPath, replaceTabs, str } from "./render-utils.ts";
+import { displayPath, getTextOutput, renderToolPath, replaceTabs, str } from "./render-utils.ts";
 import { wrapToolDefinition } from "./tool-definition-wrapper.ts";
 import { DEFAULT_MAX_BYTES, DEFAULT_MAX_LINES, formatSize, type TruncationResult, truncateHead } from "./truncate.ts";
 
@@ -137,7 +136,7 @@ function getCompactReadClassification(
 	if (docsClassification) return docsClassification;
 
 	if (COMPACT_RESOURCE_FILE_NAMES.has(fileName)) {
-		return { kind: "resource", label: formatPathRelativeToCwdOrAbsolute(absolutePath, cwd) };
+		return { kind: "resource", label: displayPath(absolutePath, cwd) };
 	}
 
 	return undefined;

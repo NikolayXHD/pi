@@ -4,7 +4,7 @@ import type { ImageContent, TextContent } from "@earendil-works/pi-ai";
 import { getCapabilities, getImageDimensions, hyperlink, imageFallback } from "@earendil-works/pi-tui";
 import type { Theme } from "../../modes/interactive/theme/theme.ts";
 import { stripAnsi } from "../../utils/ansi.ts";
-import { resolvePath } from "../../utils/paths.ts";
+import { formatPathRelativeToCwdOrAbsolute, resolvePath } from "../../utils/paths.ts";
 import { sanitizeBinaryOutput } from "../../utils/shell.ts";
 
 export function shortenPath(path: unknown): string {
@@ -14,6 +14,14 @@ export function shortenPath(path: unknown): string {
 		return `~${path.slice(home.length)}`;
 	}
 	return path;
+}
+
+/**
+ * Путь для отображения: внутри cwd — относительный (кликабельная ссылка
+ * остаётся на абсолютный путь), вне cwd — с ~-сокращением.
+ */
+export function displayPath(path: string, cwd: string): string {
+	return shortenPath(formatPathRelativeToCwdOrAbsolute(path, cwd));
 }
 
 export function linkPath(styledText: string, rawPath: string, cwd: string): string {
@@ -81,5 +89,5 @@ export function renderToolPath(
 	if (rawPath === null) return invalidArgText(theme);
 	const value = rawPath || options?.emptyFallback;
 	if (!value) return theme.fg("toolOutput", "...");
-	return linkPath(theme.fg("accent", shortenPath(value)), value, cwd);
+	return linkPath(theme.fg("accent", displayPath(value, cwd)), value, cwd);
 }
