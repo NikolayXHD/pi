@@ -268,6 +268,36 @@ function normalizeOptionalNulls(value: unknown, schema: JsonSchemaObject): void 
 	}
 }
 
+const DIAGNOSTIC_STRING_MAX_CHARS = 120;
+const DIAGNOSTIC_DUMP_MAX_CHARS = 4000;
+
+/**
+ * Long string in the argument dump: head and tail are kept (that is where
+ * the mismatch usually lives), the middle is cut, the full length is
+ * appended as a suffix.
+ */
+function excerptDiagnosticString(text: string): string {
+	if (text.length <= DIAGNOSTIC_STRING_MAX_CHARS) return text;
+	const head = Math.ceil(DIAGNOSTIC_STRING_MAX_CHARS * 0.6);
+	const tail = DIAGNOSTIC_STRING_MAX_CHARS - head - 1;
+	return `${text.slice(0, head)}…${text.slice(-tail)} (${text.length} chars)`;
+}
+
+/**
+ * Value for the dump: strings condensed to an excerpt, structure preserved.
+ */
+function condenseDiagnosticValue(value: unknown): unknown {
+	if (typeof value === "string") return excerptDiagnosticString(value);
+	if (Array.isArray(value)) return value.map(condenseDiagnosticValue);
+	if (typeof value === "object" && value !== null) {
+		const result: Record<string, unknown> = {};
+		for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
+			result[key] = condenseDiagnosticValue(item);
+		}
+		return result;
+	}
+	return value;
+}
 function getValidator(schema: Tool["parameters"]): ReturnType<typeof Compile> {
 	const key = schema as object;
 	const cached = validatorCache.get(key);
@@ -344,7 +374,12 @@ export function validateToolArguments(tool: Tool, toolCall: ToolCall): any {
 			.map((error) => `  - ${formatValidationPath(error)}: ${error.message}`)
 			.join("\n") || "Unknown validation error";
 
-	const errorMessage = `Validation failed for tool "${toolCall.name}":\n${errors}\n\nReceived arguments:\n${JSON.stringify(toolCall.arguments, null, 2)}`;
+	const condensedArguments = JSON.stringify(condenseDiagnosticValue(toolCall.arguments), null, 2);
+	const argumentsDump =
+		condensedArguments.length > DIAGNOSTIC_DUMP_MAX_CHARS
+			? `${condensedArguments.slice(0, DIAGNOSTIC_DUMP_MAX_CHARS)}… (truncated, ${condensedArguments.length} chars)`
+			: condensedArguments;
+	const errorMessage = `Validation failed for tool "${toolCall.name}":\n${errors}\n\nReceived arguments:\n${argumentsDump}`;
 
 	throw new Error(errorMessage);
 }

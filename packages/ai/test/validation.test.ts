@@ -207,4 +207,32 @@ describe("validateToolArguments", () => {
 			expect(() => validateToolArguments(tool, toolCall)).toThrow("Validation failed");
 		}
 	});
+
+	it("condenses long strings in the validation error dump", () => {
+		const longText = "x".repeat(500);
+		const tool: Tool = {
+			name: "echo",
+			description: "Echo tool",
+			parameters: Type.Object({
+				text: Type.String(),
+				count: Type.Integer(),
+			}),
+		};
+		const toolCall: ToolCall = {
+			type: "toolCall",
+			id: "tool-1",
+			name: "echo",
+			arguments: { text: longText, count: "not-an-integer" },
+		};
+		try {
+			validateToolArguments(tool, toolCall);
+			expect.unreachable("validation should have failed");
+		} catch (error: unknown) {
+			const message = error instanceof Error ? error.message : String(error);
+			expect(message).toContain("Received arguments:");
+			expect(message).not.toContain("x".repeat(120));
+			expect(message).toContain("(500 chars)");
+			expect(message.length).toBeLessThan(2000);
+		}
+	});
 });
