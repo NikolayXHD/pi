@@ -11,16 +11,17 @@ import { keyHint } from "../../../modes/interactive/components/keybinding-hints.
 import type { Theme } from "../../../modes/interactive/theme/theme.ts";
 import type { ToolDefinition, ToolRenderResultOptions } from "../../extensions/types.ts";
 import type { GrepToolDetails } from "../grep.ts";
-import { getTextOutput, invalidArgText, shortenPath, str } from "../render-utils.ts";
+import { displayPath, getTextOutput, invalidArgText, str } from "../render-utils.ts";
 import { DEFAULT_MAX_BYTES, formatSize } from "../truncate.ts";
 
 function formatGrepCall(
 	args: { pattern: string; path?: string; glob?: string; limit?: number } | undefined,
 	theme: Theme,
+	cwd: string,
 ): string {
 	const pattern = str(args?.pattern);
 	const rawPath = str(args?.path);
-	const path = rawPath !== null ? shortenPath(rawPath || ".") : null;
+	const path = rawPath !== null ? displayPath(rawPath || ".", cwd) : null;
 	const glob = str(args?.glob);
 	const limit = args?.limit;
 	const invalidArg = invalidArgText(theme);
@@ -71,7 +72,7 @@ function formatGrepResult(
 export const grepRenderers: Pick<ToolDefinition<any, any>, "renderCall" | "renderResult"> = {
 	renderCall(args, theme, context) {
 		const text = (context.lastComponent as Text | undefined) ?? new Text("", 0, 0);
-		text.setText(formatGrepCall(args as any, theme));
+		text.setText(formatGrepCall(args as any, theme, context.cwd));
 		return text;
 	},
 	renderResult(result, options, theme, context) {

@@ -11,13 +11,17 @@ import { keyHint } from "../../../modes/interactive/components/keybinding-hints.
 import type { Theme } from "../../../modes/interactive/theme/theme.ts";
 import type { ToolDefinition, ToolRenderResultOptions } from "../../extensions/types.ts";
 import type { FindToolDetails } from "../find.ts";
-import { getTextOutput, invalidArgText, shortenPath, str } from "../render-utils.ts";
+import { displayPath, getTextOutput, invalidArgText, str } from "../render-utils.ts";
 import { DEFAULT_MAX_BYTES, formatSize } from "../truncate.ts";
 
-function formatFindCall(args: { pattern: string; path?: string; limit?: number } | undefined, theme: Theme): string {
+function formatFindCall(
+	args: { pattern: string; path?: string; limit?: number } | undefined,
+	theme: Theme,
+	cwd: string,
+): string {
 	const pattern = str(args?.pattern);
 	const rawPath = str(args?.path);
-	const path = rawPath !== null ? shortenPath(rawPath || ".") : null;
+	const path = rawPath !== null ? displayPath(rawPath || ".", cwd) : null;
 	const limit = args?.limit;
 	const invalidArg = invalidArgText(theme);
 	let text =
@@ -66,7 +70,7 @@ function formatFindResult(
 export const findRenderers: Pick<ToolDefinition<any, any>, "renderCall" | "renderResult"> = {
 	renderCall(args, theme, context) {
 		const text = (context.lastComponent as Text | undefined) ?? new Text("", 0, 0);
-		text.setText(formatFindCall(args as any, theme));
+		text.setText(formatFindCall(args as any, theme, context.cwd));
 		return text;
 	},
 	renderResult(result, options, theme, context) {
