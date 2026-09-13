@@ -9,7 +9,7 @@ const bedrockExplicitRetryMessage =
 
 describe("regression: issue 6019 explicit provider retry messages", () => {
 	it.each([
-		["openai", openAIExplicitRetryMessage],
+		["deepseek", openAIExplicitRetryMessage],
 		["bedrock", bedrockExplicitRetryMessage],
 	])("retries %s explicit retry guidance", async (_provider, errorMessage) => {
 		const harness = await createHarness({ settings: { retry: { enabled: true, maxRetries: 3, baseDelayMs: 1 } } });

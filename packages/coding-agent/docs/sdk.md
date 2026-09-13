@@ -380,8 +380,9 @@ const refreshedRuntime = await ModelRuntime.create({
 });
 
 // Find specific built-in model (doesn't check if API key exists)
-const opus = getModel("anthropic", "claude-opus-4-5");
-if (!opus) throw new Error("Model not found");
+const deepseekPro = getModel("deepseek", "deepseek-v4-pro");
+const minimax = getModel("minimax", "MiniMax-M2.7");
+if (!deepseekPro || !minimax) throw new Error("Model not found");
 
 // Find any model by provider/id, including custom models from models.json
 // (doesn't check if API key exists)
@@ -391,13 +392,13 @@ const customModel = modelRuntime.getModel("my-provider", "my-model");
 const available = await modelRuntime.getAvailable();
 
 const { session } = await createAgentSession({
-  model: opus,
+  model: deepseekPro,
   thinkingLevel: "medium", // off, minimal, low, medium, high, xhigh, max
   
   // Models for cycling (Ctrl+P in interactive mode)
   scopedModels: [
-    { model: opus, thinkingLevel: "high" },
-    { model: haiku, thinkingLevel: "off" },
+    { model: deepseekPro, thinkingLevel: "high" },
+    { model: minimax, thinkingLevel: "off" },
   ],
   
   modelRuntime,
@@ -420,14 +421,14 @@ import {
 } from "@earendil-works/pi-coding-agent";
 
 const cliModel = resolveCliModel({
-  cliModel: "anthropic/claude-opus-4-5:high",
+  cliModel: "deepseek/deepseek-v4-pro:high",
   modelRuntime,
 });
 if (cliModel.error) throw new Error(cliModel.error);
 if (cliModel.warning) console.warn(cliModel.warning);
 
 const { scopedModels, diagnostics } = await resolveModelScopeWithDiagnostics(
-  ["anthropic/*:high", "gpt-5"],
+  ["deepseek/*:high", "MiniMax-M2.7"],
   modelRuntime,
 );
 for (const diagnostic of diagnostics) {
@@ -461,7 +462,7 @@ for (const provider of modelRuntime.getProviders()) {
 }
 
 // Runtime API key override (not persisted to disk)
-await modelRuntime.setRuntimeApiKey("anthropic", "sk-my-temp-key");
+await modelRuntime.setRuntimeApiKey("deepseek", "sk-my-temp-key");
 
 // Custom credential and model locations
 const customRuntime = await ModelRuntime.create({
@@ -485,7 +486,7 @@ Public model/auth operations and `ModelRuntime.create({ signal })` accept option
 ```typescript
 const signal = AbortSignal.timeout(15_000);
 const result = await modelRuntime.refresh({
-  providers: ["anthropic"],
+  providers: ["deepseek"],
   signal,
 });
 if (result.aborted) console.warn("Catalog refresh timed out; using cached models");
@@ -975,7 +976,7 @@ const modelRuntime = await ModelRuntime.create({
   modelsPath: "/custom/agent/models.json",
 });
 if (process.env.MY_KEY) {
-  await modelRuntime.setRuntimeApiKey("anthropic", process.env.MY_KEY);
+  await modelRuntime.setRuntimeApiKey("deepseek", process.env.MY_KEY);
 }
 
 // Inline tool
@@ -990,7 +991,7 @@ const statusTool = defineTool({
   }),
 });
 
-const model = getModel("anthropic", "claude-opus-4-5");
+const model = getModel("deepseek", "deepseek-v4-pro");
 if (!model) throw new Error("Model not found");
 
 // In-memory settings with overrides

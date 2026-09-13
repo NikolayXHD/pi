@@ -291,7 +291,7 @@ describe("SessionManager custom flat session directory", () => {
 			role: "assistant",
 			content: [{ type: "text", text: `reply to ${label}` }],
 			api: "anthropic-messages",
-			provider: "anthropic",
+			provider: "minimax",
 			model: "test",
 			usage: {
 				input: 1,

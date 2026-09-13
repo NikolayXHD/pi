@@ -696,7 +696,7 @@ pi.on("before_provider_headers", (event, ctx) => {
   event.headers["x-session-id"] = ctx.sessionManager.getSessionId();
 
   // Drop a tracking header pi adds for this call
-  event.headers["X-OpenRouter-Title"] = null;
+  event.headers["x-client-request-id"] = null;
 });
 ```
 
@@ -1014,7 +1014,7 @@ ctx.sessionManager.getLeafId()              // Current leaf entry ID
 
 Access to models, providers, and resolved authentication. `ctx.modelRegistry.getProvider(id)` returns the effective pi-ai provider, while `getProviderAuth(id)` resolves its current API key, headers, base URL, and provider-scoped environment without requiring a loaded model. `ctx.model` is the active model, and `ctx.thinkingLevel` is its current effective thinking level.
 
-`ctx.scopedModels` is the read-only list of models scoped to the current session — the same set the `/scoped-models` command shows. It is resolved at session start from the `--models` CLI flag and the `enabledModels` setting (matched against the available catalogue with minimatch on `provider/modelId` or a bare `modelId`). It is empty when no scoping is configured, meaning every available model is usable. Each entry is `{ model, thinkingLevel? }`, where `thinkingLevel` is set only when a pattern pinned it (e.g. `anthropic/*:high`). Use it to populate a model picker that mirrors the built-in one instead of enumerating the whole catalogue via `ctx.modelRegistry.getAvailable()`.
+`ctx.scopedModels` is the read-only list of models scoped to the current session — the same set the `/scoped-models` command shows. It is resolved at session start from the `--models` CLI flag and the `enabledModels` setting (matched against the available catalogue with minimatch on `provider/modelId` or a bare `modelId`). It is empty when no scoping is configured, meaning every available model is usable. Each entry is `{ model, thinkingLevel? }`, where `thinkingLevel` is set only when a pattern pinned it (e.g. `deepseek/*:high`). Use it to populate a model picker that mirrors the built-in one instead of enumerating the whole catalogue via `ctx.modelRegistry.getAvailable()`.
 
 ### ctx.signal
 
@@ -1706,7 +1706,7 @@ Typical `sourceInfo.source` values:
 Set the model for the current session. The change is recorded in session history and restored when that session is resumed, but it does not change the configured `defaultProvider` or `defaultModel` used by new sessions. Returns `false` if authentication is not configured for the model's provider. See [models.md](models.md) for configuring custom models.
 
 ```typescript
-const model = ctx.modelRegistry.find("anthropic", "claude-sonnet-4-5");
+const model = ctx.modelRegistry.find("deepseek", "deepseek-v4-pro");
 if (model) {
   const success = await pi.setModel(model);
   if (!success) {
@@ -1816,14 +1816,14 @@ pi.registerProvider("llama.cpp", {
 });
 
 // Override baseUrl for an existing provider (keeps all models)
-pi.registerProvider("anthropic", {
+pi.registerProvider("deepseek", {
   baseUrl: "https://proxy.example.com"
 });
 
 // Register provider with OAuth support for /login
 pi.registerProvider("corporate-ai", {
   baseUrl: "https://ai.corp.com",
-  api: "openai-responses",
+  api: "openai-completions",
   models: [...],
   oauth: {
     name: "Corporate AI (SSO)",
@@ -1851,7 +1851,7 @@ The object form accepts a complete pi-ai `Provider`, including native `auth`, `g
 - `name` - Display name for the provider in UI such as `/login`.
 - `baseUrl` - API endpoint URL. Required when defining models.
 - `apiKey` - API key literal, environment interpolation (`$ENV_VAR` or `${ENV_VAR}`), or leading `!command`. Required when defining models (unless `oauth` provided). `$$` escapes `$`, and `$!` escapes a literal `!` without triggering command execution.
-- `api` - API type: `"anthropic-messages"`, `"openai-completions"`, `"openai-responses"`, etc.
+- `api` - API type: `"anthropic-messages"`, `"openai-completions"`, or a custom API id
 - `headers` - Custom headers to include in requests.
 - `authHeader` - If true, adds `Authorization: Bearer` header automatically.
 - `models` - Array of model definitions. If provided, replaces all existing models for this provider. Model definitions can set `baseUrl` to override the provider endpoint for that model.
@@ -2380,14 +2380,13 @@ You do not need to return provider-specific tool references or mark the loader a
 
 #### Models with native deferred loading
 
-- **Anthropic**
-  - **Models:** Sonnet, Opus, Fable version 4.5 or newer (without Haiku)
+- **Anthropic Messages**
+  - **Models:** models that implement client-side `tool_reference` blocks
   - **Native representation:** Deferred definitions use `defer_loading`; the load point uses `tool_reference` content.
-- **OpenAI**
-  - **Models:** `gpt-5.4` and newer family
-  - **Native representation:** Pi adds completed client `tool_search_call` and `tool_search_output` items at the load point.
 
-For a verified custom model or proxy, native handling can be enabled with `compat.supportsToolReferences: true` for `anthropic-messages`, or `compat.supportsToolSearch: true` for `openai-responses` and `openai-codex-responses`. Leave these disabled unless the endpoint and model accept the corresponding native protocol.
+This protocol applies to custom providers and proxies built on the Anthropic Messages API; no built-in model enables it.
+
+For a verified custom model or proxy, native handling can be enabled with `compat.supportsToolReferences: true` for `anthropic-messages`. Leave it disabled unless the endpoint and model accept the native protocol.
 
 #### Fallback behavior
 

@@ -43,6 +43,7 @@ const TEXT_MODELS = [
 	"MiniMax-M2.5",
 	"deepseek-v3.2",
 	"deepseek-v4-flash",
+	"deepseek-v4-flash-0731",
 	"deepseek-v4-pro",
 	"glm-5",
 	"glm-5.1",

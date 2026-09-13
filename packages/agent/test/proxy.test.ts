@@ -3,10 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { type ProxyAssistantMessageEvent, streamProxy } from "../src/proxy.ts";
 
 const model: Model<"openai-responses"> = {
-	id: "gpt-5.4",
+	id: "deepseek-v4-pro",
 	name: "GPT-5.4",
 	api: "openai-responses",
-	provider: "openai",
+	provider: "deepseek",
 	baseUrl: "https://api.openai.com/v1",
 	reasoning: true,
 	input: ["text"],

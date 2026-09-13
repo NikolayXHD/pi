@@ -8,7 +8,7 @@ const aiEntryUrl = new URL("../src/index.ts", import.meta.url).href;
 const compatEntryUrl = new URL("../src/compat.ts", import.meta.url).href;
 const providersAllUrl = new URL("../src/providers/all.ts", import.meta.url).href;
 
-const SDK_SPECIFIERS = ["@anthropic-ai/sdk", "openai", "@google/genai", "@aws-sdk/client-bedrock-runtime"] as const;
+const SDK_SPECIFIERS = ["@anthropic-ai/sdk", "deepseek", "@google/genai", "@aws-sdk/client-bedrock-runtime"] as const;
 
 type ProbeResult = {
 	loadedSpecifiers: string[];
@@ -82,10 +82,10 @@ describe("lazy provider module loading", () => {
 		const result = runProbe(`
 			const compat = await import(${JSON.stringify(compatEntryUrl)});
 			const model = {
-				id: "claude-sonnet-4-6",
+				id: "MiniMax-M2.7",
 				name: "Claude Sonnet 4",
 				api: "anthropic-messages",
-				provider: "anthropic",
+				provider: "minimax",
 				baseUrl: "https://api.anthropic.com",
 				reasoning: true,
 				input: ["text"],
@@ -103,7 +103,7 @@ describe("lazy provider module loading", () => {
 	it("loads only the Anthropic SDK when dispatching through streamSimple", () => {
 		const result = runProbe(`
 			const compat = await import(${JSON.stringify(compatEntryUrl)});
-			const model = compat.getModel("anthropic", "claude-sonnet-4-6");
+			const model = compat.getModel("minimax", "MiniMax-M2.7");
 			const context = { messages: [{ role: "user", content: "hi" }] };
 			await compat.streamSimple(model, context).result();
 		`);

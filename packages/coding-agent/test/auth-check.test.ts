@@ -32,45 +32,45 @@ describe("auth check command", () => {
 	});
 
 	test("reports a configured provider as ready", async () => {
-		const runtime = await createRuntime(AuthStorage.inMemory({ openai: { type: "api_key", key: "test-key" } }));
+		const runtime = await createRuntime(AuthStorage.inMemory({ deepseek: { type: "api_key", key: "test-key" } }));
 
-		await expect(checkProviderAuth(parseArgs(["--provider", "openai"]), runtime)).resolves.toEqual({
+		await expect(checkProviderAuth(parseArgs(["--provider", "deepseek"]), runtime)).resolves.toEqual({
 			status: "ready",
-			provider: "openai",
+			provider: "deepseek",
 			authType: "api_key",
 		});
 	});
 
 	test("resolves the provider from --model", async () => {
-		const runtime = await createRuntime(AuthStorage.inMemory({ openai: { type: "api_key", key: "test-key" } }));
+		const runtime = await createRuntime(AuthStorage.inMemory({ deepseek: { type: "api_key", key: "test-key" } }));
 
-		await expect(checkProviderAuth(parseArgs(["--model", "openai/gpt-5.5"]), runtime)).resolves.toEqual({
+		await expect(checkProviderAuth(parseArgs(["--model", "deepseek/deepseek-v4-pro"]), runtime)).resolves.toEqual({
 			status: "ready",
-			provider: "openai",
+			provider: "deepseek",
 			authType: "api_key",
 		});
 		await expect(
-			checkProviderAuth(parseArgs(["--provider", "openai", "--model", "gpt-5.5"]), runtime),
-		).resolves.toMatchObject({ status: "ready", provider: "openai" });
+			checkProviderAuth(parseArgs(["--provider", "deepseek", "--model", "deepseek-v4-pro"]), runtime),
+		).resolves.toMatchObject({ status: "ready", provider: "deepseek" });
 	});
 
 	test("reads credentials without refreshing OAuth when requested", async () => {
-		const apiCredentials = AuthStorage.inMemory({ openai: { type: "api_key", key: "test-key" } });
+		const apiCredentials = AuthStorage.inMemory({ deepseek: { type: "api_key", key: "test-key" } });
 		const apiRuntime = await createRuntime(apiCredentials);
-		await expect(getProviderCredential("openai", apiRuntime, apiCredentials, { refresh: false })).resolves.toBe(
+		await expect(getProviderCredential("deepseek", apiRuntime, apiCredentials, { refresh: false })).resolves.toBe(
 			"test-key",
 		);
 
 		const credentials = AuthStorage.inMemory({
-			"openai-codex": { type: "oauth", access: "old-token", refresh: "refresh-token", expires: 0 },
+			"kimi-coding": { type: "oauth", access: "old-token", refresh: "refresh-token", expires: 0 },
 		});
 		const oauthRuntime = await createRuntime(credentials);
-		const oauth = oauthRuntime.getProvider("openai-codex")?.auth.oauth;
-		if (!oauth) throw new Error("OpenAI Codex OAuth provider is not registered");
+		const oauth = oauthRuntime.getProvider("kimi-coding")?.auth.oauth;
+		if (!oauth) throw new Error("Kimi Coding OAuth provider is not registered");
 		const refresh = vi.fn(oauth.refresh);
 		oauth.refresh = refresh;
 
-		await expect(getProviderCredential("openai-codex", oauthRuntime, credentials, { refresh: false })).resolves.toBe(
+		await expect(getProviderCredential("kimi-coding", oauthRuntime, credentials, { refresh: false })).resolves.toBe(
 			"old-token",
 		);
 		expect(refresh).not.toHaveBeenCalled();
@@ -78,11 +78,11 @@ describe("auth check command", () => {
 
 	test("refreshes OAuth by default", async () => {
 		const credentials = AuthStorage.inMemory({
-			"openai-codex": { type: "oauth", access: "old-token", refresh: "refresh-token", expires: 0 },
+			"kimi-coding": { type: "oauth", access: "old-token", refresh: "refresh-token", expires: 0 },
 		});
 		const runtime = await createRuntime(credentials);
-		const oauth = runtime.getProvider("openai-codex")?.auth.oauth;
-		if (!oauth) throw new Error("OpenAI Codex OAuth provider is not registered");
+		const oauth = runtime.getProvider("kimi-coding")?.auth.oauth;
+		if (!oauth) throw new Error("Kimi Coding OAuth provider is not registered");
 		const refresh = vi.fn(async () => ({
 			type: "oauth" as const,
 			access: "fresh-token",
@@ -92,7 +92,7 @@ describe("auth check command", () => {
 		oauth.refresh = refresh;
 
 		await expect(
-			checkProviderAuth(parseArgs(["--provider", "openai-codex"]), runtime, { refresh: true }),
+			checkProviderAuth(parseArgs(["--provider", "kimi-coding"]), runtime, { refresh: true }),
 		).resolves.toMatchObject({
 			status: "ready",
 		});
@@ -111,12 +111,16 @@ describe("auth check command", () => {
 
 	test("does not treat an unresolved stored environment reference as configured", async () => {
 		const authPath = join(tempDir, "auth.json");
-		writeFileSync(authPath, JSON.stringify({ openai: { type: "api_key", key: "$MISSING_AUTH_CHECK_KEY" } }), "utf-8");
+		writeFileSync(
+			authPath,
+			JSON.stringify({ deepseek: { type: "api_key", key: "$MISSING_AUTH_CHECK_KEY" } }),
+			"utf-8",
+		);
 		const runtime = await createRuntime(new ReadOnlyAuthStorage(authPath));
 
-		await expect(checkProviderAuth(parseArgs(["--provider", "openai"]), runtime)).resolves.toEqual({
+		await expect(checkProviderAuth(parseArgs(["--provider", "deepseek"]), runtime)).resolves.toEqual({
 			status: "not_ready",
-			provider: "openai",
+			provider: "deepseek",
 			reason: "credentials_not_configured",
 		});
 	});
@@ -126,9 +130,9 @@ describe("auth check command", () => {
 		writeFileSync(authPath, "{invalid-json", "utf-8");
 		const runtime = await createRuntime(new ReadOnlyAuthStorage(authPath));
 
-		await expect(checkProviderAuth(parseArgs(["--provider", "openai"]), runtime)).resolves.toEqual({
+		await expect(checkProviderAuth(parseArgs(["--provider", "deepseek"]), runtime)).resolves.toEqual({
 			status: "invalid",
-			provider: "openai",
+			provider: "deepseek",
 			reason: "invalid_state",
 		});
 	});
@@ -137,7 +141,7 @@ describe("auth check command", () => {
 		const authPath = join(tempDir, "agent", "auth.json");
 		const runtime = await createRuntime(new ReadOnlyAuthStorage(authPath));
 
-		await expect(checkProviderAuth(parseArgs(["--provider", "openai"]), runtime)).resolves.toMatchObject({
+		await expect(checkProviderAuth(parseArgs(["--provider", "deepseek"]), runtime)).resolves.toMatchObject({
 			status: "not_ready",
 			reason: "credentials_not_configured",
 		});
@@ -146,18 +150,18 @@ describe("auth check command", () => {
 	});
 
 	test("accepts optional JSON output, credential output, and --no-refresh", () => {
-		expect(parseAuthCommand(["auth", "check", "--provider", "openai"])).toEqual({
+		expect(parseAuthCommand(["auth", "check", "--provider", "deepseek"])).toEqual({
 			kind: "check",
-			args: ["--provider", "openai"],
+			args: ["--provider", "deepseek"],
 			json: false,
 			credentials: false,
 			noRefresh: false,
 		});
 		expect(
-			parseAuthCommand(["auth", "check", "--json", "--credentials", "--no-refresh", "--provider", "openai"]),
+			parseAuthCommand(["auth", "check", "--json", "--credentials", "--no-refresh", "--provider", "deepseek"]),
 		).toEqual({
 			kind: "check",
-			args: ["--provider", "openai"],
+			args: ["--provider", "deepseek"],
 			json: true,
 			credentials: true,
 			noRefresh: true,
@@ -166,6 +170,6 @@ describe("auth check command", () => {
 
 	test("creates an auth-check runtime without catalog storage", async () => {
 		const runtime = await createAuthCheckModelRuntime(AuthStorage.inMemory());
-		expect(runtime.getProvider("openai")).toBeDefined();
+		expect(runtime.getProvider("deepseek")).toBeDefined();
 	});
 });

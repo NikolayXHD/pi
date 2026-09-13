@@ -376,7 +376,7 @@ function streamCustomAnthropic(
 					accept: "application/json",
 					"anthropic-dangerous-direct-browser-access": "true",
 					"anthropic-beta": `claude-code-20250219,oauth-2025-04-20,${betaFeatures.join(",")}`,
-					"user-agent": "claude-cli/2.1.2 (external, cli)",
+					"user-agent": "MiniMax-M2.7",
 					"x-app": "cli",
 				};
 			} else {
@@ -580,7 +580,7 @@ export default function (pi: ExtensionAPI) {
 
 		models: [
 			{
-				id: "claude-opus-4-5",
+				id: "MiniMax-M2.7",
 				name: "Claude Opus 4.5 (Custom)",
 				reasoning: true,
 				input: ["text", "image"],
@@ -589,7 +589,7 @@ export default function (pi: ExtensionAPI) {
 				maxTokens: 64000,
 			},
 			{
-				id: "claude-sonnet-4-5",
+				id: "MiniMax-M2.7",
 				name: "Claude Sonnet 4.5 (Custom)",
 				reasoning: true,
 				input: ["text", "image"],

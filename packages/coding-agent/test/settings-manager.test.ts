@@ -33,7 +33,7 @@ describe("SettingsManager", () => {
 				settingsPath,
 				JSON.stringify({
 					theme: "dark",
-					defaultModel: "claude-sonnet",
+					defaultModel: "MiniMax-M2.7",
 				}),
 			);
 
@@ -42,7 +42,7 @@ describe("SettingsManager", () => {
 
 			// Simulate user editing settings.json externally to add enabledModels
 			const currentSettings = JSON.parse(readFileSync(settingsPath, "utf-8"));
-			currentSettings.enabledModels = ["claude-opus-4-5", "gpt-5.2-codex"];
+			currentSettings.enabledModels = ["MiniMax-M2.7", "deepseek-v4-pro"];
 			writeFileSync(settingsPath, JSON.stringify(currentSettings, null, 2));
 
 			// User changes thinking level via Shift+Tab
@@ -51,10 +51,10 @@ describe("SettingsManager", () => {
 
 			// Verify enabledModels is preserved
 			const savedSettings = JSON.parse(readFileSync(settingsPath, "utf-8"));
-			expect(savedSettings.enabledModels).toEqual(["claude-opus-4-5", "gpt-5.2-codex"]);
+			expect(savedSettings.enabledModels).toEqual(["MiniMax-M2.7", "deepseek-v4-pro"]);
 			expect(savedSettings.defaultThinkingLevel).toBe("high");
 			expect(savedSettings.theme).toBe("dark");
-			expect(savedSettings.defaultModel).toBe("claude-sonnet");
+			expect(savedSettings.defaultModel).toBe("MiniMax-M2.7");
 		});
 
 		it("should preserve custom settings when changing theme", async () => {
@@ -62,7 +62,7 @@ describe("SettingsManager", () => {
 			writeFileSync(
 				settingsPath,
 				JSON.stringify({
-					defaultModel: "claude-sonnet",
+					defaultModel: "MiniMax-M2.7",
 				}),
 			);
 
@@ -174,7 +174,7 @@ describe("SettingsManager", () => {
 				JSON.stringify({
 					theme: "light",
 					extensions: ["/after.ts"],
-					defaultModel: "claude-sonnet",
+					defaultModel: "MiniMax-M2.7",
 				}),
 			);
 
@@ -182,7 +182,7 @@ describe("SettingsManager", () => {
 
 			expect(manager.getTheme()).toBe("light");
 			expect(manager.getExtensionPaths()).toEqual(["/after.ts"]);
-			expect(manager.getDefaultModel()).toBe("claude-sonnet");
+			expect(manager.getDefaultModel()).toBe("MiniMax-M2.7");
 		});
 
 		it("should keep previous settings and report the file path when the file is invalid", async () => {

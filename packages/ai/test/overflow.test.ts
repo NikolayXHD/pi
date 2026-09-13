@@ -149,8 +149,8 @@ describe("isContextOverflow", () => {
 			cacheWrite: 25554,
 			output: 16,
 			api: "openai-responses",
-			provider: "openai",
-			model: "gpt-5.6-sol",
+			provider: "deepseek",
+			model: "deepseek-v4-pro",
 		});
 		expect(isRecoverableLength(message, 128000)).toBe(true);
 	});

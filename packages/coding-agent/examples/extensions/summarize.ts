@@ -160,7 +160,7 @@ export default function (pi: ExtensionAPI) {
 				ctx.ui.notify("Preparing summary...", "info");
 			}
 
-			const model = ctx.modelRegistry.find("openai", "gpt-5.2");
+			const model = ctx.modelRegistry.find("deepseek", "deepseek-v4-pro");
 			if (!model) {
 				if (ctx.hasUI) ctx.ui.notify("Model openai/gpt-5.2 not found", "warning");
 				return;

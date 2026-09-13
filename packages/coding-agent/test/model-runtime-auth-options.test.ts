@@ -35,10 +35,10 @@ function testModel(id: string) {
 describe("ModelRuntime auth options", () => {
 	it("accepts a pi-ai CredentialStore", async () => {
 		const credentials = new InMemoryCredentialStore();
-		await credentials.modify("anthropic", async () => ({ type: "api_key", key: "stored-key" }));
+		await credentials.modify("minimax", async () => ({ type: "api_key", key: "stored-key" }));
 		const runtime = await ModelRuntime.create({ credentials, modelsPath: null });
 
-		expect((await runtime.getAuth("anthropic"))?.auth.apiKey).toBe("stored-key");
+		expect((await runtime.getAuth("minimax"))?.auth.apiKey).toBe("stored-key");
 	});
 
 	it("scopes provider availability reads and records refresh failures", async () => {
@@ -58,12 +58,12 @@ describe("ModelRuntime auth options", () => {
 		const runtime = await ModelRuntime.create({ credentials, modelsPath: null });
 
 		reads.length = 0;
-		await runtime.getAvailable("anthropic");
-		expect(new Set(reads)).toEqual(new Set(["anthropic"]));
+		await runtime.getAvailable("minimax");
+		expect(new Set(reads)).toEqual(new Set(["minimax"]));
 
 		failReads = true;
-		await expect(runtime.getAvailable("anthropic")).rejects.toThrow("Credential store read failed for anthropic");
-		expect(runtime.getError()).toContain("Availability refresh: Credential store read failed for anthropic");
+		await expect(runtime.getAvailable("minimax")).rejects.toThrow("Credential store read failed for minimax");
+		expect(runtime.getError()).toContain("Availability refresh: Credential store read failed for minimax");
 
 		failReads = false;
 		await runtime.getAvailable();
@@ -78,37 +78,33 @@ describe("ModelRuntime auth options", () => {
 			expect.arrayContaining([
 				expect.objectContaining({
 					type: "api_key",
-					provider: expect.objectContaining({ id: "amazon-bedrock", name: "Amazon Bedrock" }),
-					method: expect.objectContaining({ name: "AWS credentials or bearer token" }),
-				}),
-				expect.objectContaining({
-					type: "api_key",
-					provider: expect.objectContaining({ id: "google-vertex", name: "Google Vertex AI" }),
-					method: expect.objectContaining({ name: "Google Cloud credentials" }),
+					provider: expect.objectContaining({ id: "deepseek", name: "DeepSeek" }),
+					method: expect.objectContaining({ name: "DeepSeek API key" }),
 				}),
 				expect.objectContaining({
 					type: "oauth",
-					provider: expect.objectContaining({ id: "anthropic", name: "Anthropic" }),
+					provider: expect.objectContaining({ id: "kimi-coding", name: "Kimi For Coding" }),
+					method: expect.objectContaining({ name: "Kimi Code (subscription)" }),
 				}),
 				expect.objectContaining({
 					type: "api_key",
-					provider: expect.objectContaining({ id: "cloudflare-ai-gateway", name: "Cloudflare AI Gateway" }),
+					provider: expect.objectContaining({ id: "moonshotai", name: "Moonshot AI" }),
 				}),
 				expect.objectContaining({
 					type: "api_key",
-					provider: expect.objectContaining({ id: "cloudflare-workers-ai", name: "Cloudflare Workers AI" }),
+					provider: expect.objectContaining({ id: "xiaomi", name: "Xiaomi" }),
 				}),
 			]),
 		);
 		expect(authOptions(runtime, "api_key").every((option) => option.type === "api_key")).toBe(true);
 		expect(authOptions(runtime, "oauth").every((option) => option.type === "oauth")).toBe(true);
-		expect(options.some((option) => option.provider.id === "openai-codex" && option.type === "api_key")).toBe(false);
+		expect(options.some((option) => option.provider.id === "kimi-coding" && option.type === "oauth")).toBe(true);
 	});
 
 	it("attaches the provider's active auth status to every method option", async () => {
 		const runtime = await ModelRuntime.create({
 			credentials: AuthStorage.inMemory({
-				anthropic: {
+				"kimi-coding": {
 					type: "oauth",
 					access: "access",
 					refresh: "refresh",
@@ -118,42 +114,46 @@ describe("ModelRuntime auth options", () => {
 			modelsPath: null,
 		});
 
-		const options = authOptions(runtime).filter((option) => option.provider.id === "anthropic");
+		const options = authOptions(runtime).filter((option) => option.provider.id === "kimi-coding");
 		expect(options).toHaveLength(2);
-		expect(await runtime.checkAuth("anthropic")).toMatchObject({ type: "oauth" });
+		expect(await runtime.checkAuth("kimi-coding")).toMatchObject({ type: "oauth" });
 	});
 
 	it("distinguishes subscription OAuth from generic OAuth sign-in", async () => {
 		const runtime = await ModelRuntime.create({
 			credentials: AuthStorage.inMemory({
-				anthropic: {
+				"kimi-coding": {
 					type: "oauth",
-					access: "anthropic-access",
-					refresh: "anthropic-refresh",
+					access: "kimi-access",
+					refresh: "kimi-refresh",
 					expires: Date.now() + 60 * 60_000,
 				},
-				openrouter: {
+				"generic-oauth": {
 					type: "oauth",
-					access: "openrouter-key",
+					access: "generic-access",
 					refresh: "",
 					expires: Number.MAX_SAFE_INTEGER,
-				},
-				radius: {
-					type: "oauth",
-					access: "radius-access",
-					refresh: "radius-refresh",
-					expires: Date.now() + 60 * 60_000,
 				},
 			}),
 			modelsPath: null,
 		});
+		runtime.registerProvider("generic-oauth", {
+			baseUrl: "https://example.test/v1",
+			oauth: {
+				name: "Generic OAuth",
+				isSubscription: false,
+				login: async () => ({ access: "generic-access", refresh: "", expires: Date.now() + 60_000 }),
+				refreshToken: async (credentials) => credentials,
+				getApiKey: (credentials) => credentials.access,
+			},
+			api: "openai-completions",
+			models: [testModel("oauth-model")],
+		});
 
-		expect(runtime.isUsingOAuth("anthropic")).toBe(true);
-		expect(runtime.isUsingSubscription("anthropic")).toBe(true);
-		expect(runtime.isUsingOAuth("openrouter")).toBe(true);
-		expect(runtime.isUsingSubscription("openrouter")).toBe(false);
-		expect(runtime.isUsingOAuth("radius")).toBe(true);
-		expect(runtime.isUsingSubscription("radius")).toBe(false);
+		expect(runtime.isUsingOAuth("kimi-coding")).toBe(true);
+		expect(runtime.isUsingSubscription("kimi-coding")).toBe(true);
+		expect(runtime.isUsingOAuth("generic-oauth")).toBe(true);
+		expect(runtime.isUsingSubscription("generic-oauth")).toBe(false);
 	});
 
 	it("constructs an API key method for an extension API-key provider", async () => {

@@ -30,7 +30,7 @@ function createModel(
 		id: reasoning ? "reasoning-model" : "non-reasoning-model",
 		name: reasoning ? "Reasoning Model" : "Non-reasoning Model",
 		api: "anthropic-messages",
-		provider: "anthropic",
+		provider: "minimax",
 		baseUrl: "https://api.anthropic.com",
 		reasoning,
 		input: ["text"],
@@ -45,8 +45,8 @@ const mockSummaryResponse: AssistantMessage = {
 	role: "assistant",
 	content: [{ type: "text", text: "## Goal\nTest summary" }],
 	api: "anthropic-messages",
-	provider: "anthropic",
-	model: "claude-sonnet-4-5",
+	provider: "minimax",
+	model: "MiniMax-M2.7",
 	usage: {
 		input: 10,
 		output: 10,
@@ -251,8 +251,8 @@ describe("generateSummary reasoning options", () => {
 			createModel(true, 8192, {
 				allowedFallbackModels: [
 					{
-						provider: "anthropic",
-						model: "claude-opus-4-8",
+						provider: "minimax",
+						model: "MiniMax-M2.7",
 						cost: { input: 5, output: 25, cacheRead: 0.5, cacheWrite: 6.25 },
 					},
 				],

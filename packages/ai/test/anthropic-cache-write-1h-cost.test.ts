@@ -56,12 +56,12 @@ function eventsWithCacheCreation(
 	];
 }
 
-// claude-opus-4-8: input 5, cacheWrite (5m) 6.25 per Mtok. 1h write = 2x input = 10.
+// minimax MiniMax-M2.7: input 0.3, cacheWrite (5m) 0.375 per Mtok. 1h write = 2x input = 0.6.
 const context: Context = { messages: [{ role: "user", content: "hi", timestamp: Date.now() }] };
 
 describe("Anthropic 1h cache write cost", () => {
 	it("prices the 1h portion at 2x input and the rest at the 5m rate", async () => {
-		const model = getModel("anthropic", "claude-opus-4-8");
+		const model = getModel("minimax", "MiniMax-M2.7");
 		const response = createSseResponse(
 			eventsWithCacheCreation({ ephemeral_5m_input_tokens: 600_000, ephemeral_1h_input_tokens: 400_000 }),
 		);
@@ -69,18 +69,18 @@ describe("Anthropic 1h cache write cost", () => {
 
 		expect(result.usage.cacheWrite).toBe(1_000_000);
 		expect(result.usage.cacheWrite1h).toBe(400_000);
-		// 600k * 6.25/Mtok + 400k * 10/Mtok = 3.75 + 4.0 = 7.75
-		expect(result.usage.cost.cacheWrite).toBeCloseTo(7.75, 10);
+		// 600k * 0.375/Mtok + 400k * 0.6/Mtok = 0.225 + 0.24 = 0.465
+		expect(result.usage.cost.cacheWrite).toBeCloseTo(0.465, 10);
 	});
 
 	it("falls back to the 5m rate when no breakdown is reported", async () => {
-		const model = getModel("anthropic", "claude-opus-4-8");
+		const model = getModel("minimax", "MiniMax-M2.7");
 		const response = createSseResponse(eventsWithCacheCreation(undefined));
 		const result = await streamAnthropic(model, context, { client: createFakeAnthropicClient(response) }).result();
 
 		expect(result.usage.cacheWrite).toBe(1_000_000);
 		expect(result.usage.cacheWrite1h ?? 0).toBe(0);
-		// 1M * 6.25/Mtok = 6.25
-		expect(result.usage.cost.cacheWrite).toBeCloseTo(6.25, 10);
+		// 1M * 0.375/Mtok = 0.375
+		expect(result.usage.cost.cacheWrite).toBeCloseTo(0.375, 10);
 	});
 });

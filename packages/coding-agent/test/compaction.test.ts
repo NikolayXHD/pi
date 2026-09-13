@@ -62,8 +62,8 @@ function createAssistantMessage(text: string, usage?: Usage): AssistantMessage {
 		stopReason: "stop",
 		timestamp: Date.now(),
 		api: "anthropic-messages",
-		provider: "anthropic",
-		model: "claude-sonnet-4-5",
+		provider: "minimax",
+		model: "MiniMax-M2.7",
 	};
 }
 
@@ -387,7 +387,7 @@ describe("buildSessionContext", () => {
 		const loaded = buildSessionContext(entries);
 		expect(loaded.messages.length).toBe(4);
 		expect(loaded.thinkingLevel).toBe("off");
-		expect(loaded.model).toEqual({ provider: "anthropic", modelId: "claude-sonnet-4-5" });
+		expect(loaded.model).toEqual({ provider: "minimax", modelId: "MiniMax-M2.7" });
 	});
 
 	it("should handle single compaction", () => {
@@ -449,14 +449,14 @@ describe("buildSessionContext", () => {
 	it("should track model and thinking level changes", () => {
 		const entries: SessionEntry[] = [
 			createMessageEntry(createUserMessage("1")),
-			createModelChangeEntry("openai", "gpt-4"),
+			createModelChangeEntry("deepseek", "deepseek-v4-pro"),
 			createMessageEntry(createAssistantMessage("a")),
 			createThinkingLevelEntry("high"),
 		];
 
 		const loaded = buildSessionContext(entries);
 		// model_change is later overwritten by assistant message's model info
-		expect(loaded.model).toEqual({ provider: "anthropic", modelId: "claude-sonnet-4-5" });
+		expect(loaded.model).toEqual({ provider: "minimax", modelId: "MiniMax-M2.7" });
 		expect(loaded.thinkingLevel).toBe("high");
 	});
 });
@@ -544,7 +544,7 @@ describe("Large session fixture", () => {
 describe.skipIf(!process.env.ANTHROPIC_OAUTH_TOKEN)("LLM summarization", () => {
 	it("should generate a compaction result for the large session", async () => {
 		const entries = loadLargeSessionEntries();
-		const model = getModel("anthropic", "claude-sonnet-4-5")!;
+		const model = getModel("minimax", "MiniMax-M2.7")!;
 
 		const preparation = prepareCompaction(entries, DEFAULT_COMPACTION_SETTINGS);
 		expect(preparation).toBeDefined();
@@ -565,7 +565,7 @@ describe.skipIf(!process.env.ANTHROPIC_OAUTH_TOKEN)("LLM summarization", () => {
 	it("should produce valid session after compaction", async () => {
 		const entries = loadLargeSessionEntries();
 		const loaded = buildSessionContext(entries);
-		const model = getModel("anthropic", "claude-sonnet-4-5")!;
+		const model = getModel("minimax", "MiniMax-M2.7")!;
 
 		const preparation = prepareCompaction(entries, DEFAULT_COMPACTION_SETTINGS);
 		expect(preparation).toBeDefined();

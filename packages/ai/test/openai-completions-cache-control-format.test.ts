@@ -1,8 +1,23 @@
 import { Type } from "typebox";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { stream as streamOpenAICompletions } from "../src/api/openai-completions.ts";
-import { getModel } from "../src/compat.ts";
 import type { Message, Model } from "../src/types.ts";
+
+function anthropicCacheModel(id: string): Model<"openai-completions"> {
+	return {
+		id,
+		name: id,
+		api: "openai-completions",
+		provider: "proxy",
+		baseUrl: "https://proxy.example.com/v1",
+		reasoning: true,
+		input: ["text"],
+		cost: { input: 3, output: 15, cacheRead: 0.3, cacheWrite: 3.75 },
+		contextWindow: 200000,
+		maxTokens: 8192,
+		compat: { cacheControlFormat: "anthropic" },
+	};
+}
 
 interface CacheControl {
 	type: "ephemeral";
@@ -132,7 +147,7 @@ describe("openai-completions cacheControlFormat", () => {
 			id: "custom-qwen",
 			name: "Custom Qwen",
 			api: "openai-completions",
-			provider: "openrouter",
+			provider: "proxy",
 			baseUrl: "https://example.com/v1",
 			reasoning: true,
 			input: ["text"],
@@ -153,14 +168,14 @@ describe("openai-completions cacheControlFormat", () => {
 		expectAnthropicCacheMarkers(params);
 	});
 
-	it("preserves Anthropic-style cache markers for OpenRouter Anthropic batch aliases", async () => {
-		const model = getModel("openrouter", "anthropic/claude-fable-5.1:batch");
+	it("preserves Anthropic-style cache markers for models with cacheControlFormat anthropic", async () => {
+		const model = anthropicCacheModel("claude-sonnet-4");
 		const params = await capturePayload(model);
 		expectAnthropicCacheMarkers(params);
 	});
 
 	it("moves the conversation cache marker to a tool result", async () => {
-		const model = getModel("openrouter", "anthropic/claude-fable-5.1:batch");
+		const model = anthropicCacheModel("claude-sonnet-4");
 		const timestamp = Date.now();
 		const params = await capturePayload(model, undefined, [
 			{ role: "user", content: "Read the file", timestamp },
@@ -168,7 +183,7 @@ describe("openai-completions cacheControlFormat", () => {
 				role: "assistant",
 				content: [{ type: "toolCall", id: "call_1", name: "read", arguments: { path: "README.md" } }],
 				api: "openai-completions",
-				provider: "openrouter",
+				provider: "proxy",
 				model: model.id,
 				usage: {
 					input: 0,
@@ -205,7 +220,7 @@ describe("openai-completions cacheControlFormat", () => {
 			id: "custom-qwen",
 			name: "Custom Qwen",
 			api: "openai-completions",
-			provider: "openrouter",
+			provider: "proxy",
 			baseUrl: "https://example.com/v1",
 			reasoning: true,
 			input: ["text"],

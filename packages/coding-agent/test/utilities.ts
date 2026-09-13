@@ -137,7 +137,7 @@ export function assistantMsg(text: string) {
 		role: "assistant" as const,
 		content: [{ type: "text" as const, text }],
 		api: "anthropic-messages" as const,
-		provider: "anthropic",
+		provider: "minimax",
 		model: "test",
 		usage: {
 			input: 1,
@@ -240,7 +240,7 @@ export async function createTestSession(options: TestSessionOptions = {}): Promi
 	const tempDir = join(tmpdir(), `pi-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 	mkdirSync(tempDir, { recursive: true });
 
-	const model = getModel("anthropic", "claude-sonnet-4-5")!;
+	const model = getModel("minimax", "MiniMax-M2.7")!;
 	const agent = new Agent({
 		getApiKey: () => API_KEY,
 		initialState: {

@@ -124,7 +124,7 @@ describe("Models runtime", () => {
 	});
 
 	it("applies request-wide pricing tiers above the configured input threshold", () => {
-		const model = testModel("openai", "gpt-5.6-sol");
+		const model = testModel("deepseek", "deepseek-v4-pro");
 		model.cost = {
 			input: 5,
 			output: 30,

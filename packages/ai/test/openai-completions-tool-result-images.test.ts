@@ -36,11 +36,8 @@ const compat: Omit<
 	requiresAssistantAfterToolResult: false,
 	requiresThinkingAsText: false,
 	requiresReasoningContentOnAssistantMessages: false,
-	thinkingFormat: "openai",
-	openRouterRouting: {},
-	vercelGatewayRouting: {},
+	thinkingFormat: "deepseek",
 	chatTemplateKwargs: {},
-	chatTemplateArgs: {},
 	zaiToolStream: false,
 	supportsThinkingTokenBudget: false,
 	thinkingTokenBudgetField: undefined,
@@ -48,7 +45,6 @@ const compat: Omit<
 	supportsOpenAIGrammarTools: false,
 	cacheControlFormat: "anthropic",
 	sendSessionAffinityHeaders: false,
-	sessionAffinityFormat: "openai",
 	supportsLongCacheRetention: true,
 };
 
@@ -79,7 +75,7 @@ function buildEmptyToolResult(toolCallId: string, timestamp: number): ToolResult
 
 describe("openai-completions convertMessages", () => {
 	it("batches tool-result images after consecutive tool results", () => {
-		const { compat: _compat, ...baseModel } = getModel("openai", "gpt-4o-mini");
+		const { compat: _compat, ...baseModel } = getModel("deepseek", "deepseek-v4-pro");
 		const model: Model<"openai-completions"> = {
 			...baseModel,
 			api: "openai-completions",
@@ -125,7 +121,7 @@ describe("openai-completions convertMessages", () => {
 	});
 
 	it("uses '(no tool output)' placeholder for empty tool results without images", () => {
-		const { compat: _compat, ...baseModel } = getModel("openai", "gpt-4o-mini");
+		const { compat: _compat, ...baseModel } = getModel("deepseek", "deepseek-v4-pro");
 		const model: Model<"openai-completions"> = {
 			...baseModel,
 			api: "openai-completions",

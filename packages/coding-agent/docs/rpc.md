@@ -11,7 +11,7 @@ pi --mode rpc [options]
 ```
 
 Common options:
-- `--provider <name>`: Set the LLM provider (anthropic, openai, google, etc.)
+- `--provider <name>`: Set the LLM provider (deepseek, zai, kimi-coding, etc.)
 - `--model <pattern>`: Model pattern or ID (supports `provider/id` and optional `:<thinking>`)
 - `--name <name>` / `-n <name>`: Set the session display name at startup
 - `--no-session`: Disable session persistence
@@ -242,7 +242,7 @@ Messages are `AgentMessage` objects (see [Message Types](#message-types)).
 Switch to a specific model.
 
 ```json
-{"type": "set_model", "provider": "anthropic", "modelId": "claude-sonnet-4-20250514"}
+{"type": "set_model", "provider": "deepseek", "modelId": "deepseek-v4-pro"}
 ```
 
 Response contains the full [Model](#model) object:
@@ -1410,20 +1410,20 @@ Source files:
 
 ```json
 {
-  "id": "claude-sonnet-4-20250514",
-  "name": "Claude Sonnet 4",
-  "api": "anthropic-messages",
-  "provider": "anthropic",
-  "baseUrl": "https://api.anthropic.com",
+  "id": "deepseek-v4-pro",
+  "name": "DeepSeek V4 Pro",
+  "api": "openai-completions",
+  "provider": "deepseek",
+  "baseUrl": "https://api.deepseek.com",
   "reasoning": true,
-  "input": ["text", "image"],
-  "contextWindow": 200000,
-  "maxTokens": 16384,
+  "input": ["text"],
+  "contextWindow": 1000000,
+  "maxTokens": 384000,
   "cost": {
-    "input": 3.0,
-    "output": 15.0,
-    "cacheRead": 0.3,
-    "cacheWrite": 3.75
+    "input": 0.435,
+    "output": 0.87,
+    "cacheRead": 0.003625,
+    "cacheWrite": 0
   }
 }
 ```
@@ -1451,9 +1451,9 @@ The `content` field can be a string or an array of `TextContent`/`ImageContent` 
     {"type": "thinking", "thinking": "User is greeting me..."},
     {"type": "toolCall", "id": "call_123", "name": "bash", "arguments": {"command": "ls"}}
   ],
-  "api": "anthropic-messages",
-  "provider": "anthropic",
-  "model": "claude-sonnet-4-20250514",
+  "api": "openai-completions",
+  "provider": "deepseek",
+  "model": "deepseek-v4-pro",
   "usage": {
     "input": 100,
     "output": 50,

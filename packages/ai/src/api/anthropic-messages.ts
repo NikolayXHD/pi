@@ -43,7 +43,6 @@ import { retryProviderRequest } from "../utils/provider-retry.ts";
 import { sanitizeSurrogates } from "../utils/sanitize-unicode.ts";
 
 import { getJsonSchemaToolParameters, resolveJsonSchemaStrictSampling } from "./constrained-sampling.ts";
-import { buildCopilotDynamicHeaders, hasCopilotVisionInput } from "./github-copilot-headers.ts";
 import { adjustMaxTokensForThinking, buildBaseOptions, clampMaxTokensToContext } from "./simple-options.ts";
 import { transformMessages } from "./transform-messages.ts";
 
@@ -200,17 +199,11 @@ function getAnthropicCompat(
 }
 
 /**
- * Default for `supportsToolReferences`: first-party Anthropic models except
- * Haiku (rejects client-side tool_reference blocks) and models that predate
- * tool search (Claude 3.x, Opus/Sonnet 4.0, Opus 4.1).
+ * Default for `supportsToolReferences`: models that implement client-side
+ * tool_reference blocks. Everything else falls back to plain function tools.
  */
-function defaultSupportsToolReferences(model: Model<"anthropic-messages">): boolean {
-	if (model.provider !== "anthropic" || model.id.includes("haiku")) return false;
-	const version = model.id.match(/^claude-(?:opus|sonnet|fable)-(\d+)(?:-(\d+))?(?:-|$)/);
-	if (!version) return false;
-	const major = Number(version[1]);
-	const minor = version[2] && version[2].length < 8 ? Number(version[2]) : 0;
-	return major > 4 || (major === 4 && minor >= 5);
+function defaultSupportsToolReferences(_model: Model<"anthropic-messages">): boolean {
+	return false;
 }
 
 export interface AnthropicOptions extends StreamOptions {
@@ -543,26 +536,10 @@ export const stream: StreamFunction<"anthropic-messages", AnthropicOptions> = (
 				const apiKey = options?.apiKey;
 				assertRequestAuth(model.provider, apiKey, options?.headers);
 
-				let copilotDynamicHeaders: Record<string, string> | undefined;
-				if (model.provider === "github-copilot") {
-					const hasImages = hasCopilotVisionInput(context.messages);
-					copilotDynamicHeaders = buildCopilotDynamicHeaders({
-						messages: context.messages,
-						hasImages,
-					});
-				}
-
 				const cacheRetention = resolveCacheRetention(options?.cacheRetention, options?.env);
 				const cacheSessionId = cacheRetention === "none" ? undefined : options?.sessionId;
 
-				const created = createClient(
-					model,
-					apiKey,
-					options?.headers,
-					options?.fetch,
-					copilotDynamicHeaders,
-					cacheSessionId,
-				);
+				const created = createClient(model, apiKey, options?.headers, options?.fetch, cacheSessionId);
 				client = created.client;
 				isOAuth = created.isOAuthToken;
 			}
@@ -903,31 +880,8 @@ function createClient(
 	apiKey: string | undefined,
 	optionsHeaders?: ProviderHeaders,
 	fetch?: typeof globalThis.fetch,
-	dynamicHeaders?: Record<string, string>,
 	sessionId?: string,
 ): { client: Anthropic; isOAuthToken: boolean } {
-	// Copilot: Bearer auth.
-	if (model.provider === "github-copilot") {
-		const client = new Anthropic({
-			apiKey: null,
-			authToken: apiKey ?? null,
-			baseURL: model.baseUrl,
-			dangerouslyAllowBrowser: true,
-			fetch,
-			defaultHeaders: mergeClientHeaders(
-				{
-					accept: "application/json",
-					"anthropic-dangerous-direct-browser-access": "true",
-				},
-				model.headers,
-				dynamicHeaders,
-				optionsHeaders,
-			),
-		});
-
-		return { client, isOAuthToken: false };
-	}
-
 	// OAuth: Bearer auth, Claude Code identity headers
 	if (apiKey && isOAuthToken(apiKey)) {
 		const client = new Anthropic({

@@ -363,13 +363,13 @@ ${chalk.bold("Examples:")}
   ${APP_NAME} --model sonnet:high "Solve this complex problem"
 
   # Limit model cycling to specific models
-  ${APP_NAME} --models claude-sonnet,claude-haiku,gpt-4o
+  ${APP_NAME} --models deepseek-v4-pro,deepseek-v4-flash,glm-5.2
 
   # Limit to a specific provider with glob pattern
-  ${APP_NAME} --models "github-copilot/*"
+  ${APP_NAME} --models "deepseek/*"
 
   # Cycle models with fixed thinking levels
-  ${APP_NAME} --models sonnet:high,haiku:low
+  ${APP_NAME} --models kimi-k3:high,kimi-k2.7-code:low
 
   # Start with a specific thinking level
   ${APP_NAME} --thinking high "Solve this complex problem"

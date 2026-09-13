@@ -9,7 +9,7 @@ import { createAgentSession, ModelRuntime } from "@earendil-works/pi-coding-agen
 const modelRuntime = await ModelRuntime.create();
 
 // Option 1: Find a specific built-in model by provider/id
-const opus = modelRuntime.getModel("anthropic", "claude-opus-4-5");
+const opus = modelRuntime.getModel("minimax", "MiniMax-M2.7");
 if (opus) {
 	console.log(`Found model: ${opus.provider}/${opus.id}`);
 }

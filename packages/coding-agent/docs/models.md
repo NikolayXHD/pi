@@ -91,41 +91,12 @@ Override defaults when you need specific values:
 
 The file reloads each time you open `/model`. Edit during session; no restart needed.
 
-## Google AI Studio Example
-
-Use `google-generative-ai` with a `baseUrl` to add models from Google AI Studio, including custom Gemma 4 entries:
-
-```json
-{
-  "providers": {
-    "my-google": {
-      "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
-      "api": "google-generative-ai",
-      "apiKey": "$GEMINI_API_KEY",
-      "models": [
-        {
-          "id": "gemma-4-31b-it",
-          "name": "Gemma 4 31B",
-          "input": ["text", "image"],
-          "contextWindow": 262144,
-          "reasoning": true
-        }
-      ]
-    }
-  }
-}
-```
-
-The `baseUrl` is required when adding custom models to the `google-generative-ai` API type.
-
 ## Supported APIs
 
 | API | Description |
 |-----|-------------|
 | `openai-completions` | OpenAI Chat Completions (most compatible) |
-| `openai-responses` | OpenAI Responses API |
 | `anthropic-messages` | Anthropic Messages API |
-| `google-generative-ai` | Google Generative AI |
 
 Set `api` at provider level (default for all models) or model level (override per model).
 
@@ -136,7 +107,6 @@ Set `api` at provider level (default for all models) or model level (override pe
 | `baseUrl` | API endpoint URL |
 | `api` | API type (see above) |
 | `apiKey` | Optional API key config (see value resolution below). Omit it when auth is provided by `/login`/`auth.json` or CLI `--api-key`. |
-| `oauth` | Dynamic OAuth provider type. Currently supports `"radius"`; requires the gateway `baseUrl`. |
 | `headers` | Custom headers (see value resolution below) |
 | `authHeader` | Set `true` to add `Authorization: Bearer <apiKey>` automatically |
 | `models` | Array of model configurations |
@@ -150,7 +120,7 @@ The `apiKey` and `headers` fields support command execution, environment interpo
 
 - **Shell command:** `"!command"` at the start executes the whole value as a command and uses stdout
   ```json
-  "apiKey": "!security find-generic-password -ws 'anthropic'"
+  "apiKey": "!security find-generic-password -ws 'deepseek'"
   "apiKey": "!op read 'op://vault/item/credential'"
   ```
 - **Environment interpolation:** `"$ENV_VAR"` or `"${ENV_VAR}"` uses the value of the named variable. Interpolation works inside larger literals.
@@ -252,7 +222,7 @@ Current behavior:
 }
 ```
 
-Only OpenAI-compatible APIs apply it (`openai-completions`, `openai-responses`, `azure-openai-responses`); other APIs ignore it. Keys override pi's named request fields (for example a `temperature` key here beats the request-level temperature), so prefer it as the single source of sampling truth for a model. In `modelOverrides`, `samplingParams` merges per key with the base model's value.
+Only `openai-completions` applies it; other APIs ignore it. Keys override pi's named request fields (for example a `temperature` key here beats the request-level temperature), so prefer it as the single source of sampling truth for a model. In `modelOverrides`, `samplingParams` merges per key with the base model's value.
 
 A constant thinking-token cap can go here too, but it will not follow `thinkingBudgets` or leave room for the answer. Prefer `compat.thinkingTokenBudgetField` (or the `supportsThinkingTokenBudget` alias) for that.
 
@@ -306,24 +276,24 @@ Route a built-in provider through a proxy without redefining models:
 ```json
 {
   "providers": {
-    "anthropic": {
+    "deepseek": {
       "baseUrl": "https://my-proxy.example.com/v1"
     }
   }
 }
 ```
 
-All built-in Anthropic models remain available. Existing OAuth or API key auth continues to work.
+All built-in DeepSeek models remain available. Existing API key auth continues to work.
 
 To merge custom models into a built-in provider, include the `models` array:
 
 ```json
 {
   "providers": {
-    "anthropic": {
+    "deepseek": {
       "baseUrl": "https://my-proxy.example.com/v1",
-      "apiKey": "$ANTHROPIC_API_KEY",
-      "api": "anthropic-messages",
+      "apiKey": "$DEEPSEEK_API_KEY",
+      "api": "openai-completions",
       "models": [...]
     }
   }
@@ -343,15 +313,10 @@ Use `modelOverrides` to customize built-in models and matching extension-registe
 ```json
 {
   "providers": {
-    "openrouter": {
+    "minimax": {
       "modelOverrides": {
-        "anthropic/claude-sonnet-4": {
-          "name": "Claude Sonnet 4 (Bedrock Route)",
-          "compat": {
-            "openRouterRouting": {
-              "only": ["amazon-bedrock"]
-            }
-          }
+        "MiniMax-M2.7-highspeed": {
+          "name": "MiniMax M2.7 Highspeed"
         }
       }
     }
@@ -360,24 +325,6 @@ Use `modelOverrides` to customize built-in models and matching extension-registe
 ```
 
 `modelOverrides` supports these fields per model: `name`, `reasoning`, `thinkingLevelMap`, `input`, `cost` (partial), `contextWindow`, `maxTokens`, `samplingParams` (merged per key), `headers`, `compat`.
-
-Direct OpenAI GPT-5.6 Sol, Terra, and Luna default to a `272000` context window so requests remain within OpenAI's short-context pricing tier. To opt into OpenAI's 1.05M context window, increase it for each model you use:
-
-```json
-{
-  "providers": {
-    "openai": {
-      "modelOverrides": {
-        "gpt-5.6-sol": {
-          "contextWindow": 1050000
-        }
-      }
-    }
-  }
-}
-```
-
-The override preserves the built-in pricing metadata. Requests with more than 272K total input tokens use GPT-5.6's long-context rates for the entire request. Apply the same override to `gpt-5.6-terra` or `gpt-5.6-luna` when needed.
 
 Behavior notes:
 - `modelOverrides` are applied to built-in provider models and matching extension-registered provider models.
@@ -398,7 +345,7 @@ Claude models with per-turn effort support use `supportsMidConvoEffort`. Pi then
 
 Some Anthropic-compatible providers emit thinking blocks with empty signatures and still expect them on replay. Set `allowEmptySignature` to `true` only for those providers; real Anthropic rejects empty thinking signatures.
 
-Built-in Anthropic models enable `supportsStrictTools` in their model metadata. Custom Anthropic-compatible models must set it to `true` when their endpoint accepts strict JSON-schema tool definitions.
+Custom Anthropic-compatible models must set `supportsStrictTools` to `true` when their endpoint accepts strict JSON-schema tool definitions.
 
 ```json
 {
@@ -434,7 +381,7 @@ Built-in Anthropic models enable `supportsStrictTools` in their model metadata. 
 | `forceAdaptiveThinking` | Whether to send adaptive thinking (`thinking.type: "adaptive"` plus `output_config.effort`) for this model. Built-in adaptive models set this automatically. Default: `false`. |
 | `supportsMidConvoEffort` | Whether the exact Claude model transport supports per-turn effort system messages and thinking binding controls. Pi persists native effort levels and always sends `drop_block` when enabled. Default: `false`. |
 | `allowEmptySignature` | Whether to replay empty thinking signatures as `signature: ""` instead of converting thinking to text. Default: `false`. |
-| `supportsStrictTools` | Whether the provider accepts strict JSON-schema tool definitions. Default: `false`; built-in Anthropic models enable it in generated metadata. |
+| `supportsStrictTools` | Whether the provider accepts strict JSON-schema tool definitions. Default: `false`. |
 
 ## OpenAI Compatibility
 
@@ -471,22 +418,18 @@ For providers with partial OpenAI compatibility, use the `compat` field.
 | `requiresAssistantAfterToolResult` | Insert an assistant message before a user message after tool results |
 | `requiresThinkingAsText` | Convert thinking blocks to plain text |
 | `requiresReasoningContentOnAssistantMessages` | Include empty `reasoning_content` on all replayed assistant messages when reasoning is enabled |
-| `thinkingFormat` | Use `reasoning_effort`, `openrouter`, `deepseek`, `together`, `baseten`, `zai`, `qwen`, `chat-template`, or `qwen-chat-template` thinking parameters |
+| `thinkingFormat` | Use `reasoning_effort`, `deepseek`, `zai`, `qwen`, `chat-template`, `qwen-chat-template`, or `ant-ling` thinking parameters |
 | `chatTemplateKwargs` | `chat_template_kwargs` values for `thinkingFormat: "chat-template"`; use `{ "$var": "thinking.enabled" }`, `{ "$var": "thinking.effort" }`, or `{ "$var": "thinking.budget" }` for pi-controlled thinking values |
-| `chatTemplateArgs` | `chat_template_args` values for `thinkingFormat: "baseten"`; use `{ "$var": "thinking.enabled" }`, `{ "$var": "thinking.effort" }`, or `{ "$var": "thinking.budget" }` for pi-controlled thinking values |
 | `thinkingTokenBudgetField` | Top-level request field used to cap reasoning tokens from `thinkingBudgets`, clamped so at least 1024 tokens remain for the answer. `"thinking_token_budget"` (vLLM), `"thinking_budget"` (Qwen/DashScope/SGLang), `"thinking_budget_tokens"` (llama.cpp). Off by default; not set on the generated catalog. |
 | `supportsThinkingTokenBudget` | Alias for `thinkingTokenBudgetField: "thinking_token_budget"` (vLLM). Prefer `thinkingTokenBudgetField`. Default: `false`. |
 | `cacheControlFormat` | Use Anthropic-style `cache_control` markers on the system prompt, last tool definition, and last user, assistant, or tool-result text content. Currently only `anthropic` is supported. |
 | `sendSessionAffinityHeaders` | For `openai-completions`, send session-affinity headers from the session id when caching is enabled. Default: `false`. |
-| `sessionAffinityFormat` | For `openai-completions` and `openai-responses`, the session-affinity header format: `openai` sends `session_id`/`x-client-request-id` (completions also `x-session-affinity`), `openai-nosession` omits the underscore-containing `session_id` header, `openrouter` sends `x-session-id`. Does not affect the `prompt_cache_key` body param. Default: auto-detected. |
 | `supportsStrictMode` | Whether the provider accepts strict JSON-schema function tool definitions. Defaults depend on the API; built-in OpenAI models carry explicit capability metadata. |
-| `supportsOpenAIGrammarTools` | Whether OpenAI-compatible APIs emit custom Lark/regex grammar tools. When `false`, grammar-constrained tools fall back to normal function tools. Default: `false`; the built-in model catalog enables it for GPT-5+ models on OpenAI, OpenAI Codex, Azure OpenAI, GitHub Copilot, opencode, and Cloudflare AI Gateway. |
+| `supportsOpenAIGrammarTools` | Whether OpenAI-compatible APIs emit custom Lark/regex grammar tools. When `false`, grammar-constrained tools fall back to normal function tools. Default: `false`. |
 | `deferredToolsMode` | Use provider-specific deferred tool serialization. Currently only `"kimi"` is supported for Kimi's OpenAI-compatible Chat Completions format. |
 | `supportsLongCacheRetention` | Whether the provider accepts long cache retention when cache retention is `long`: `prompt_cache_options.ttl: "30m"` for GPT-5.6+ Responses models, `prompt_cache_retention: "24h"` for earlier OpenAI models, or `cache_control.ttl: "1h"` when `cacheControlFormat` is `anthropic`. Default: `true`. |
-| `openRouterRouting` | OpenRouter provider routing preferences. This object is sent as-is in the `provider` field of the [OpenRouter API request](https://openrouter.ai/docs/guides/routing/provider-selection). |
-| `vercelGatewayRouting` | Vercel AI Gateway routing config for provider selection (`only`, `order`) |
 
-`openrouter` uses `reasoning: { effort }`. `together` uses `reasoning: { enabled }` and also `reasoning_effort` when `supportsReasoningEffort` is enabled. `qwen` uses top-level `enable_thinking`. Use `qwen-chat-template` for local Qwen-compatible servers that require `chat_template_kwargs.enable_thinking` and `preserve_thinking`. Use `chat-template` for vLLM/Hugging Face chat templates that need configurable `chat_template_kwargs`, such as `chatTemplateKwargs: { "thinking": { "$var": "thinking.enabled" } }` for DeepSeek V3.x templates. Use `thinkingFormat: "baseten"` with `chatTemplateArgs` for providers that expose toggle controls through `chat_template_args` and optionally support top-level `reasoning_effort`.
+`deepseek` uses `thinking: { type }` plus `reasoning_effort` when supported. `qwen` uses top-level `enable_thinking`. Use `qwen-chat-template` for local Qwen-compatible servers that require `chat_template_kwargs.enable_thinking` and `preserve_thinking`. Use `chat-template` for vLLM/Hugging Face chat templates that need configurable `chat_template_kwargs`, such as `chatTemplateKwargs: { "thinking": { "$var": "thinking.enabled" } }` for DeepSeek V3.x templates.
 
 `thinkingTokenBudgetField` is independent of `thinkingFormat`. Do not enable it on the generated Qwen catalog: those models already send `reasoning_effort`, and DashScope rejects `thinking_budget` together with `reasoning_effort`.
 
@@ -497,74 +440,22 @@ Example:
 ```json
 {
   "providers": {
-    "openrouter": {
-      "baseUrl": "https://openrouter.ai/api/v1",
-      "apiKey": "$OPENROUTER_API_KEY",
+    "deepseek-proxy": {
+      "baseUrl": "https://proxy.example.com/v1",
+      "apiKey": "$DEEPSEEK_PROXY_KEY",
       "api": "openai-completions",
       "models": [
         {
-          "id": "openrouter/anthropic/claude-3.5-sonnet",
-          "name": "OpenRouter Claude 3.5 Sonnet",
-          "compat": {
-            "openRouterRouting": {
-              "allow_fallbacks": true,
-              "require_parameters": false,
-              "data_collection": "deny",
-              "zdr": true,
-              "enforce_distillable_text": false,
-              "order": ["anthropic", "amazon-bedrock", "google-vertex"],
-              "only": ["anthropic", "amazon-bedrock"],
-              "ignore": ["gmicloud", "friendli"],
-              "quantizations": ["fp16", "bf16"],
-              "sort": {
-                "by": "price",
-                "partition": "model"
-              },
-              "max_price": {
-                "prompt": 10,
-                "completion": 20
-              },
-              "preferred_min_throughput": {
-                "p50": 100,
-                "p90": 50
-              },
-              "preferred_max_latency": {
-                "p50": 1,
-                "p90": 3,
-                "p99": 5
-              }
-            }
-          }
-        }
-      ]
-    }
-  }
-}
-```
-
-Vercel AI Gateway example:
-
-```json
-{
-  "providers": {
-    "vercel-ai-gateway": {
-      "baseUrl": "https://ai-gateway.vercel.sh/v1",
-      "apiKey": "$AI_GATEWAY_API_KEY",
-      "api": "openai-completions",
-      "models": [
-        {
-          "id": "moonshotai/kimi-k2.5",
-          "name": "Kimi K2.5 (Fireworks via Vercel)",
+          "id": "deepseek-v4-pro",
+          "name": "DeepSeek V4 Pro (proxy)",
           "reasoning": true,
-          "input": ["text", "image"],
-          "cost": { "input": 0.6, "output": 3, "cacheRead": 0, "cacheWrite": 0 },
-          "contextWindow": 262144,
-          "maxTokens": 262144,
+          "input": ["text"],
+          "cost": { "input": 0.28, "output": 0.42, "cacheRead": 0.028, "cacheWrite": 0 },
+          "contextWindow": 128000,
+          "maxTokens": 64000,
           "compat": {
-            "vercelGatewayRouting": {
-              "only": ["fireworks", "novita"],
-              "order": ["fireworks", "novita"]
-            }
+            "thinkingFormat": "deepseek",
+            "maxTokensField": "max_tokens"
           }
         }
       ]

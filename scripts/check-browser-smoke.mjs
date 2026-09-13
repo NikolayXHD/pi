@@ -84,9 +84,9 @@ try {
 	const catalogInputs = Array.from(contributingInputs).filter((input) =>
 		normalizePath(input).includes("packages/ai/src/providers/data/"),
 	);
-	if (catalogInputs.length !== 1 || !normalizePath(catalogInputs[0]).endsWith("/anthropic.json")) {
+	if (catalogInputs.length !== 1 || !normalizePath(catalogInputs[0]).endsWith("/minimax.json")) {
 		throw new Error(
-			`Agent selective-provider bundle catalogs: expected only anthropic.json, found ${catalogInputs.join(", ") || "none"}`,
+			`Agent selective-provider bundle catalogs: expected only minimax.json, found ${catalogInputs.join(", ") || "none"}`,
 		);
 	}
 

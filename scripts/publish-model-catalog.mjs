@@ -21,8 +21,8 @@ const MINIMUM_PI_VERSION = "0.80.7";
 const JSON_CONTENT_TYPE = "application/json; charset=utf-8";
 const IMMUTABLE_CACHE_CONTROL = "public, max-age=31536000, immutable";
 const INDEX_CACHE_CONTROL = "no-store";
-const REQUIRED_PROVIDERS = ["anthropic", "openai", "openrouter"];
-const MINIMUM_MODEL_COUNT = 500;
+const REQUIRED_PROVIDERS = ["deepseek", "minimax", "zai"];
+const MINIMUM_MODEL_COUNT = 50;
 
 function parseArgs(args) {
 	const options = {

@@ -39,8 +39,8 @@ function createAssistantMessage(options?: {
 		role: "assistant",
 		content: options?.text ? [{ type: "text", text: options.text }] : [],
 		api: "openai-responses",
-		provider: "openai",
-		model: "gpt-4o-mini",
+		provider: "deepseek",
+		model: "deepseek-v4-pro",
 		usage: {
 			input: 0,
 			output: 0,

@@ -186,7 +186,7 @@ cat README.md | pi -p "Summarize this text"
 
 | Option | Description |
 |--------|-------------|
-| `--provider <name>` | Provider, such as `anthropic`, `openai`, or `google` |
+| `--provider <name>` | Provider, such as `deepseek`, `zai`, or `kimi-coding` |
 | `--model <pattern>` | Model pattern or ID; supports `provider/id` and optional `:<thinking>` |
 | `--api-key <key>` | API key, overriding environment variables |
 | `--thinking <level>` | `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max` |
@@ -284,13 +284,13 @@ cat README.md | pi -p "Summarize this text"
 pi --name "release audit" -p "Audit this repository"
 
 # Different model
-pi --provider openai --model gpt-4o "Help me refactor"
+pi --provider deepseek --model deepseek-v4-pro "Help me refactor"
 
 # Model with provider prefix
-pi --model openai/gpt-4o "Help me refactor"
+pi --model deepseek/deepseek-v4-pro "Help me refactor"
 
 # Model with thinking level shorthand
-pi --model sonnet:high "Solve this complex problem"
+pi --model kimi-k3:high "Solve this complex problem"
 
 # Limit model cycling
 pi --models "claude-*,gpt-4o"

@@ -39,7 +39,7 @@ const model: Model<"openai-completions"> = {
 	id: "test-model",
 	name: "Test Model",
 	api: "openai-completions",
-	provider: "openai",
+	provider: "deepseek",
 	baseUrl: "https://api.openai.com/v1",
 	reasoning: false,
 	input: ["text"],

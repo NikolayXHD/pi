@@ -205,7 +205,7 @@ describe("ExtensionRunner", () => {
 			warnSpy.mockRestore();
 		});
 
-		it("warns but allows when extension uses non-reserved built-in shortcut", async () => {
+		it("allows extension to reuse a non-reserved built-in shortcut", async () => {
 			const pasteImageKey = Array.isArray(defaultKeybindings["app.clipboard.pasteImage"])
 				? (defaultKeybindings["app.clipboard.pasteImage"][0] ?? "")
 				: defaultKeybindings["app.clipboard.pasteImage"];
@@ -225,7 +225,7 @@ describe("ExtensionRunner", () => {
 			const runner = new ExtensionRunner(result.extensions, result.runtime, tempDir, sessionManager, modelRegistry);
 			const shortcuts = runner.getShortcuts(defaultKeybindings);
 
-			expect(warnSpy).toHaveBeenCalledWith(
+			expect(warnSpy).not.toHaveBeenCalledWith(
 				expect.stringContaining("built-in shortcut for app.clipboard.pasteImage"),
 			);
 			expect(shortcuts.has(pasteImageKey as KeyId)).toBe(true);
@@ -304,7 +304,7 @@ describe("ExtensionRunner", () => {
 			warnSpy.mockRestore();
 		});
 
-		it("warns but allows when non-reserved action has multiple keys", async () => {
+		it("allows extension to reuse a multi-key non-reserved action", async () => {
 			const extCode = `
 				export default function(pi) {
 					pi.registerShortcut("ctrl+y", {
@@ -322,7 +322,7 @@ describe("ExtensionRunner", () => {
 			const keybindings = { ...defaultKeybindings, "app.clipboard.pasteImage": ["ctrl+x", "ctrl+y"] as KeyId[] };
 			const shortcuts = runner.getShortcuts(keybindings);
 
-			expect(warnSpy).toHaveBeenCalledWith(
+			expect(warnSpy).not.toHaveBeenCalledWith(
 				expect.stringContaining("built-in shortcut for app.clipboard.pasteImage"),
 			);
 			expect(shortcuts.has("ctrl+y")).toBe(true);

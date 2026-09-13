@@ -17,7 +17,7 @@ import { MODELS, streamGitLabDuo } from "./index.ts";
 const MODEL_MAP = new Map(MODELS.map((m) => [m.id, m]));
 
 async function main() {
-	const modelId = process.argv[2] || "claude-sonnet-4-5-20250929";
+	const modelId = process.argv[2] || "MiniMax-M2.7";
 	const useThinking = process.argv.includes("--thinking");
 
 	const cfg = MODEL_MAP.get(modelId);

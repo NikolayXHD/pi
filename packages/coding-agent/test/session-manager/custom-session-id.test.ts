@@ -118,8 +118,8 @@ describe("SessionManager.newSession with custom id", () => {
 						role: "assistant",
 						content: [{ type: "text", text: "hello" }],
 						api: "openai-responses",
-						provider: "openai",
-						model: "gpt-5.4",
+						provider: "deepseek",
+						model: "deepseek-v4-pro",
 						usage: {
 							input: 0,
 							output: 0,
